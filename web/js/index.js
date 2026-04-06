@@ -7,6 +7,7 @@
   const titleEl = document.getElementById("app-title");
   const descEl = document.getElementById("app-desc");
   const themeBtn = document.getElementById("theme-toggle");
+  const tocOffcanvasEl = document.getElementById("tocOffcanvas");
 
   const md = typeof marked !== "undefined" ? marked : null;
   if (md && md.setOptions) {
@@ -22,7 +23,7 @@
   }
 
   function renderAnswer(text) {
-    if (!text) return "<p class=\"muted\">(Chưa có gợi ý)</p>";
+    if (!text) return "<p class=\"text-secondary mb-0\">(Chưa có gợi ý)</p>";
     if (md) {
       const parse = typeof md.parse === "function" ? md.parse.bind(md) : md;
       return parse(text);
@@ -93,13 +94,15 @@
       const gt = g.title;
       html +=
         '<section class="group">' +
-        (gt ? '<h2 class="group__title">' + escapeHtml(gt) + "</h2>" : "") +
+        (gt
+          ? '<h2 class="group__title h6 text-secondary">' + escapeHtml(gt) + "</h2>"
+          : "") +
         block +
         "</section>";
     }
     if (!html) {
       html =
-        '<p class="no-results">Không có câu hỏi nào khớp bộ lọc. Thử từ khóa khác hoặc xóa ô tìm kiếm.</p>';
+        '<p class="text-secondary fst-italic mb-0">Không có câu hỏi nào khớp bộ lọc. Thử từ khóa khác hoặc xóa ô tìm kiếm.</p>';
     }
     contentEl.innerHTML = html;
   }
@@ -107,20 +110,32 @@
   function updateNavCurrent() {
     sectionListEl.querySelectorAll(".nav__link").forEach((a) => {
       const id = a.getAttribute("data-section-id");
-      if (id === activeId) a.setAttribute("aria-current", "page");
-      else a.removeAttribute("aria-current");
+      if (id === activeId) {
+        a.setAttribute("aria-current", "page");
+        a.classList.add("active");
+      } else {
+        a.removeAttribute("aria-current");
+        a.classList.remove("active");
+      }
     });
   }
 
   function applySearchVisibility() {
     const q = searchInput.value.trim();
-    sectionListEl.querySelectorAll(".nav__item").forEach((li) => {
-      const id = li.getAttribute("data-section-id");
+    sectionListEl.querySelectorAll(".nav__link").forEach((a) => {
+      const id = a.getAttribute("data-section-id");
       const sec = data.sections.find((s) => s.id === id);
       if (!sec) return;
       const show = matchesSearch(sec, q);
-      li.classList.toggle("nav__item--hidden", !show);
+      a.classList.toggle("d-none", !show);
     });
+  }
+
+  function closeTocIfMobile() {
+    if (!window.matchMedia("(max-width: 991.98px)").matches) return;
+    if (!tocOffcanvasEl || typeof bootstrap === "undefined" || !bootstrap.Offcanvas) return;
+    const inst = bootstrap.Offcanvas.getInstance(tocOffcanvasEl);
+    if (inst) inst.hide();
   }
 
   function showSection(id, opts) {
@@ -137,21 +152,19 @@
   function initNav() {
     sectionListEl.innerHTML = "";
     data.sections.forEach((sec) => {
-      const li = document.createElement("li");
-      li.className = "nav__item";
-      li.setAttribute("data-section-id", sec.id);
       const a = document.createElement("a");
       a.href = "#" + sec.id;
-      a.className = "nav__link";
+      a.className =
+        "list-group-item list-group-item-action nav__link py-2 px-3 text-start text-break border-start-0 border-end-0";
       a.setAttribute("data-section-id", sec.id);
       a.textContent = sec.id + ". " + sec.title;
       a.addEventListener("click", (e) => {
         e.preventDefault();
         showSection(sec.id, { skipHash: true });
         window.location.hash = sec.id;
+        closeTocIfMobile();
       });
-      li.appendChild(a);
-      sectionListEl.appendChild(li);
+      sectionListEl.appendChild(a);
     });
   }
 
@@ -169,18 +182,25 @@
 
   window.addEventListener("hashchange", onHashChange);
 
-  /* Theme */
+  /* Theme — sync custom accent + Bootstrap data-bs-theme */
+  function setTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-bs-theme", theme);
+    localStorage.setItem("interview-theme", theme);
+  }
+
   const stored = localStorage.getItem("interview-theme");
   if (stored === "dark" || stored === "light") {
-    document.documentElement.setAttribute("data-theme", stored);
+    setTheme(stored);
   } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    document.documentElement.setAttribute("data-theme", "dark");
+    setTheme("dark");
+  } else {
+    setTheme("light");
   }
 
   themeBtn.addEventListener("click", () => {
-    const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("interview-theme", next);
+    const next = document.documentElement.getAttribute("data-bs-theme") === "dark" ? "light" : "dark";
+    setTheme(next);
   });
 
   fetch("data/questions.json")
@@ -206,8 +226,10 @@
     })
     .catch((err) => {
       contentEl.innerHTML =
-        "<p>Không tải được <code>data/questions.json</code>. Mở qua HTTP (ví dụ GitHub Pages) hoặc chạy server cục bộ.</p><p><small>" +
+        '<div class="alert alert-warning mb-0" role="alert">' +
+        "<p class=\"mb-2\">Không tải được <code>data/questions.json</code>. Mở qua HTTP (ví dụ GitHub Pages) hoặc chạy server cục bộ.</p>" +
+        "<p class=\"small text-secondary mb-0\">" +
         escapeHtml(String(err)) +
-        "</small></p>";
+        "</p></div>";
     });
 })();
