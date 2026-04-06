@@ -1,0 +1,96 @@
+{
+  "id": "10",
+  "title": "Apache Kafka",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Kafka giải quyết bài toán gì? Khác RabbitMQ?",
+          "suggestion": "Nêu bài toán cốt lõi và khác biệt use case với RabbitMQ.",
+          "answer": "Kafka là distributed event streaming platform dạng append-only log, tối ưu throughput cao, lưu retention dài, và cho phép consumer replay dữ liệu theo offset. RabbitMQ là message broker thiên về queue/task processing, routing linh hoạt (exchange), ack theo message và mô hình work queue. Chọn Kafka khi cần event stream, analytics, CDC, xử lý thời gian thực; chọn RabbitMQ khi cần queue tác vụ, RPC-style messaging, routing phức tạp theo pattern."
+        },
+        {
+          "question": "Broker, topic, partition, segment, offset?",
+          "suggestion": "Giải thích từng khái niệm và quan hệ giữa chúng.",
+          "answer": "Broker là node Kafka lưu dữ liệu và phục vụ đọc/ghi. Topic là luồng logic, được chia thành nhiều partition để scale. Mỗi partition là log append-only, đảm bảo thứ tự cục bộ; dữ liệu trên đĩa được chia thành các segment để quản lý retention và I/O hiệu quả. Offset là số thứ tự tăng dần của record trong một partition, dùng để consumer theo dõi vị trí đọc."
+        },
+        {
+          "question": "Producer chọn partition?",
+          "suggestion": "Nói rõ theo key, không key, và khi nào custom partitioner.",
+          "answer": "Khi có key, producer hash key để chọn partition nên cùng key thường vào cùng partition, giữ thứ tự theo key. Khi không có key, partition được chọn theo cơ chế cân bằng tải (sticky/round-robin tùy client/version) để tối ưu batching. Dùng custom partitioner khi cần điều phối theo nghiệp vụ, giảm hot partition, hoặc ưu tiên locality."
+        },
+        {
+          "question": "Consumer group và **rebalance**?",
+          "suggestion": "Mô tả cơ chế chia partition và tác động của rebalance.",
+          "answer": "Trong một consumer group, mỗi partition chỉ được gán cho tối đa một consumer tại một thời điểm, nhờ đó tránh xử lý trùng trong cùng group. Rebalance xảy ra khi thành viên join/leave hoặc metadata thay đổi, khiến việc đọc tạm gián đoạn và có thể tăng duplicate nếu commit chưa đúng thời điểm. Cooperative rebalancing giúp thu hồi partition dần dần, giảm pause toàn bộ so với eager rebalance."
+        },
+        {
+          "question": "Commit offset — at-least-once, at-most-once, **exactly-once**?",
+          "suggestion": "Phân biệt theo vị trí commit và rủi ro duplicate/mất dữ liệu.",
+          "answer": "At-most-once: commit offset trước khi xử lý, giảm duplicate nhưng có thể mất message nếu crash sau commit. At-least-once: xử lý xong mới commit, không mất dữ liệu nhưng có thể xử lý trùng khi retry/rebalance. Exactly-once trong Kafka đạt được bằng idempotent producer + transaction (đặc biệt với Kafka Streams), nhưng với side effect ngoài Kafka vẫn cần idempotency/outbox để đảm bảo end-to-end."
+        },
+        {
+          "question": "ISR, `acks=all`, `min.insync.replicas`?",
+          "suggestion": "Giải thích độ bền dữ liệu khi cấu hình producer/broker.",
+          "answer": "ISR là tập replica đang theo kịp leader đủ mức để được coi là in-sync. Khi producer dùng `acks=all`, leader chỉ ack sau khi record được nhân bản theo chính sách ISR; `min.insync.replicas` đặt ngưỡng tối thiểu để chấp nhận ghi. Cấu hình này tăng durability và giảm nguy cơ mất dữ liệu khi broker lỗi, đổi lại latency cao hơn và có thể trả lỗi khi cụm thiếu replica khỏe."
+        },
+        {
+          "question": "ZooKeeper vs **KRaft**?",
+          "suggestion": "Cập nhật trạng thái hiện tại của Kafka về KRaft/ZooKeeper.",
+          "answer": "KRaft là cơ chế quorum controller dùng Raft ngay trong Kafka để quản lý metadata, không cần ZooKeeper. Từ Kafka 4.0, ZooKeeper mode đã bị loại bỏ và Kafka chạy KRaft-only, nên các triển khai mới cần thiết kế theo controller quorum. Lợi ích chính là giảm thành phần vận hành, đơn giản hóa kiến trúc và đồng nhất cơ chế quản trị metadata."
+        },
+        {
+          "question": "Log compaction?",
+          "suggestion": "Nêu mục tiêu và use case của compaction.",
+          "answer": "Log compaction giữ lại bản ghi mới nhất theo từng key thay vì giữ toàn bộ lịch sử theo thời gian. Nó phù hợp cho state/changelog topic, nơi consumer cần trạng thái cuối cùng để rebuild cache hoặc state store. Compaction chạy nền nên dữ liệu cũ không biến mất ngay lập tức và cần tombstone để xóa key đúng cách."
+        },
+        {
+          "question": "Dead letter topic?",
+          "suggestion": "Mô tả khi nào đẩy bản ghi sang DLT và cần kèm metadata gì.",
+          "answer": "Dead Letter Topic chứa các record xử lý lỗi sau khi retry vượt ngưỡng để tránh block luồng chính. Khi đẩy sang DLT nên kèm nguyên nhân lỗi, stack trace rút gọn, topic/partition/offset gốc, và timestamp để truy vết. DLT không phải nơi bỏ qua lỗi vĩnh viễn; cần có quy trình monitor, phân loại và reprocess an toàn."
+        },
+        {
+          "question": "Thứ tự message toàn topic?",
+          "suggestion": "Trả lời rõ phạm vi đảm bảo ordering của Kafka.",
+          "answer": "Kafka chỉ đảm bảo thứ tự trong phạm vi từng partition, không đảm bảo thứ tự toàn topic khi có nhiều partition. Muốn giữ ordering theo thực thể, cần dùng key để gom cùng thực thể vào một partition. Global ordering chỉ khả thi khi dùng một partition hoặc có cơ chế sắp xếp/phối hợp bổ sung ở downstream."
+        },
+        {
+          "question": "Spring Kafka — cấu hình production?",
+          "suggestion": "Liệt kê các cấu hình bắt buộc cho production readiness.",
+          "answer": "Cấu hình production thường gồm serializer ổn định schema (Avro/JSON Schema/Protobuf), bật idempotent producer, retry có backoff, và tuning batch (`linger.ms`, `batch.size`, compression). Với consumer, cần `max.poll.records`, timeout hợp lý, chiến lược commit rõ ràng và handler cho lỗi (retry topic/DLT). Bổ sung bảo mật SASL_SSL, ACL, metric/alert cho lag, throughput, rebalance, cùng tracing để vận hành."
+        },
+        {
+          "question": "**Retention** (`retention.ms`) và dung lượng disk?",
+          "suggestion": "Nêu cách retention ảnh hưởng dung lượng và chi phí.",
+          "answer": "Retention quyết định dữ liệu được giữ bao lâu (theo thời gian và/hoặc kích thước), tác động trực tiếp lên dung lượng đĩa và chi phí lưu trữ. Cần ước lượng theo throughput x replication factor x retention window, cộng headroom cho peak và reassign/rebuild. Thiết lập alert disk sớm, tách policy theo loại topic, và cân nhắc tiered storage theo nền tảng phân phối nếu workload retention dài."
+        },
+        {
+          "question": "**Consumer lag** là gì? Làm sao giảm?",
+          "suggestion": "Định nghĩa lag và nêu các cách giảm theo nguyên nhân.",
+          "answer": "Consumer lag là chênh lệch giữa offset cuối partition và offset consumer đã xử lý/commit, phản ánh backlog chưa tiêu thụ. Lag tăng do xử lý chậm, lỗi retry kéo dài, rebalance liên tục, hoặc số partition/consumer không cân xứng tải. Cách giảm gồm tối ưu business logic, tăng song song trong giới hạn partition, giảm batch xử lý quá nặng, tách luồng chậm sang topic riêng, và nâng tài nguyên broker/consumer."
+        },
+        {
+          "question": "**Idempotent producer** — tránh duplicate khi retry?",
+          "suggestion": "Giải thích cơ chế và giới hạn của idempotent producer.",
+          "answer": "Idempotent producer gắn producer ID và sequence number theo partition để broker nhận diện và loại bỏ record trùng do retry. Cơ chế này giảm duplicate khi lỗi mạng/timeout giữa producer và broker, đồng thời là nền tảng cho transaction. Tuy nhiên nó không tự xử lý duplicate phát sinh ở downstream side effects, nên consumer và hệ đích vẫn cần idempotency."
+        },
+        {
+          "question": "Kafka Connect / Schema Registry — ý tưởng?",
+          "suggestion": "Trình bày giá trị vận hành của Connect và quản trị schema.",
+          "answer": "Kafka Connect cung cấp framework và connector sẵn có để ingest/sink dữ liệu (DB, object store, search engine...) mà không phải tự viết pipeline từ đầu. Schema Registry quản lý version schema và rule tương thích (backward/forward/full) để producer-consumer nâng cấp an toàn. Kết hợp hai thành phần giúp giảm lỗi tích hợp và tăng tốc triển khai data pipeline."
+        },
+        {
+          "question": "Exactly-once trong Kafka có thật sự \"đúng 1 lần\" end-to-end không?",
+          "suggestion": "Phân biệt exactly-once trong Kafka và end-to-end toàn hệ thống.",
+          "answer": "EOS dựa trên idempotent producer + transaction để ghi record/offset atomically trong Kafka. Nếu có side effect ngoài Kafka (DB/HTTP), vẫn cần idempotency hoặc outbox/inbox để tránh duplicate khi retry/rebalance."
+        },
+        {
+          "question": "Consumer bị rebalance liên tục vì `max.poll.interval.ms` thường xử lý thế nào?",
+          "suggestion": "Nêu nguyên nhân timeout poll loop và cách khắc phục thực tế.",
+          "answer": "Nếu xử lý record quá lâu khiến consumer không gọi `poll()` trong giới hạn `max.poll.interval.ms`, coordinator sẽ loại consumer khỏi group và kích hoạt rebalance. Hệ quả là tăng lag, tăng duplicate và làm throughput dao động mạnh. Cách xử lý là rút ngắn thời gian xử lý mỗi poll (batch nhỏ, tách I/O nặng), tăng concurrency đúng mức, tối ưu commit/ack, và chỉ tăng `max.poll.interval.ms` khi đã kiểm soát được nguyên nhân gốc."
+        }
+      ]
+    }
+  ]
+}

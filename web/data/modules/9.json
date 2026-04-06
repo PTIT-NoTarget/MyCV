@@ -1,0 +1,101 @@
+{
+  "id": "9",
+  "title": "Redis",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Redis là gì? Khác Memcached / cache trong JVM thế nào?",
+          "suggestion": "Định nghĩa ngắn: Redis là in-memory data store. So sánh theo 3 trục: kiểu dữ liệu, persistence, phạm vi chia sẻ cache.",
+          "answer": "Redis là in-memory data structure store, dùng phổ biến cho cache, session, counter, queue nhẹ và pub/sub. So với Memcached, Redis có nhiều kiểu dữ liệu hơn (Hash, Set, ZSet, Stream), hỗ trợ replication và persistence (RDB/AOF). Cache trong JVM như Caffeine có độ trễ rất thấp nhưng chỉ cục bộ theo từng instance. Khi hệ thống chạy nhiều node và cần dữ liệu cache dùng chung, Redis thường phù hợp hơn."
+        },
+        {
+          "question": "Vì sao Redis “đơn luồng” (single-threaded) vẫn nhanh?",
+          "suggestion": "Nhấn vào in-memory + event loop đơn giản; bottleneck thực tế là lệnh O(N) và độ trễ mạng.",
+          "answer": "Redis nhanh vì dữ liệu nằm trong RAM và đường xử lý lệnh chính đơn giản, tránh lock contention phức tạp. Từ bản mới, Redis có multi-thread cho I/O mạng nhưng logic command vẫn tối ưu theo event loop. Trong production, chậm thường do dùng lệnh O(N) như `KEYS`, payload quá lớn, hoặc mạng có độ trễ cao chứ không chỉ vì CPU."
+        },
+        {
+          "question": "Các kiểu dữ liệu chính và use case?",
+          "suggestion": "Liệt kê kiểu dữ liệu theo tình huống thực tế: cache, ranking, queue, unique count, event stream.",
+          "answer": "Tôi hay dùng String cho cache object và counter (`INCR`), Hash cho entity nhiều field, Set cho dữ liệu unique, ZSet cho leaderboard hoặc delayed task theo score thời gian. List phù hợp queue đơn giản, còn Stream dùng cho luồng sự kiện có consumer group và cần đọc lại. HyperLogLog phù hợp đếm unique gần đúng với bộ nhớ rất nhỏ, ví dụ UV theo ngày."
+        },
+        {
+          "question": "Pipeline và transaction (`MULTI`/`EXEC`) khác nhau?",
+          "suggestion": "Tách mục tiêu: pipeline tối ưu network; MULTI/EXEC đảm bảo nhóm lệnh chạy liền mạch trên 1 node.",
+          "answer": "Pipeline dùng để giảm round-trip mạng bằng cách gửi nhiều lệnh cùng lúc, nên tăng throughput nhưng không tạo atomicity giữa các lệnh. `MULTI/EXEC` là cơ chế transaction của Redis: các lệnh được queue rồi thực thi liên tục khi `EXEC`. Nó không giống SQL transaction đầy đủ vì không có rollback logic phức tạp như RDBMS, nhưng vẫn hữu ích cho nhóm thao tác cần tính nhất quán ở mức Redis."
+        },
+        {
+          "question": "Lua script trong Redis dùng khi nào?",
+          "suggestion": "Dùng Lua khi cần check-then-act atomic trong một lượt gọi, tránh race condition giữa nhiều command rời.",
+          "answer": "Lua script phù hợp khi nghiệp vụ cần nhiều bước đọc/ghi nhưng phải atomic, ví dụ kiểm tra quota rồi mới tăng counter, hoặc unlock distributed lock theo token. Thay vì gọi 2-3 command riêng dễ bị race, script chạy trọn vẹn trên Redis trong một lượt và cho kết quả nhất quán hơn."
+        },
+        {
+          "question": "Persistence — **RDB** vs **AOF**? `appendfsync`?",
+          "suggestion": "RDB nhanh và gọn, AOF bền hơn; `appendfsync` là điểm cân bằng giữa độ an toàn dữ liệu và hiệu năng ghi.",
+          "answer": "RDB lưu snapshot theo chu kỳ nên file gọn và tốc độ khởi động lại tốt, nhưng có thể mất dữ liệu phát sinh sau snapshot cuối nếu sự cố. AOF ghi lại lệnh ghi, nên thường bền dữ liệu hơn. `appendfsync always` an toàn cao nhưng tốn I/O, `everysec` là cấu hình cân bằng hay dùng, còn `no` ưu tiên hiệu năng. Nhiều hệ thống bật cả RDB và AOF để tận dụng ưu điểm của cả hai."
+        },
+        {
+          "question": "Các chính sách **eviction** khi đạt `maxmemory`?",
+          "suggestion": "Nêu nhóm chính sách theo phạm vi (`allkeys`/`volatile`) và thuật toán (LRU/LFU/TTL/random).",
+          "answer": "Khi chạm `maxmemory`, Redis xử lý theo policy đã cấu hình. `noeviction` sẽ từ chối ghi mới; nhóm `allkeys-*` xét toàn bộ key, còn `volatile-*` chỉ xét key có TTL. LRU/LFU phù hợp workload cache phổ biến, `volatile-ttl` ưu tiên xóa key sắp hết hạn. Tôi chọn policy dựa trên mức chấp nhận cache miss và loại dữ liệu cần giữ lại lâu hơn."
+        },
+        {
+          "question": "**Replication** — đọc từ replica có luôn “mới nhất”?",
+          "suggestion": "Replica mặc định async nên có độ trễ đồng bộ; cần thiết kế read-after-write theo mức nhất quán mong muốn.",
+          "answer": "Trong Redis, replication thường bất đồng bộ nên replica có thể trễ so với master. Vì vậy đọc ngay sau ghi từ replica có thể nhận dữ liệu cũ. Nếu nghiệp vụ yêu cầu read-your-writes, tôi đọc từ master trong khoảng thời gian ngắn sau ghi hoặc dùng chiến lược nhất quán ở tầng ứng dụng."
+        },
+        {
+          "question": "**Sentinel** vs **Cluster**?",
+          "suggestion": "Sentinel giải bài toán HA/failover; Cluster giải cả HA và sharding theo hash slot.",
+          "answer": "Sentinel chủ yếu giám sát và tự động failover cho mô hình master-replica, phù hợp khi dữ liệu vẫn nằm trong một shard logic. Redis Cluster chia dữ liệu theo 16384 hash slot để scale ngang và vẫn có replica cho HA. Chọn Sentinel khi cần đơn giản và chưa cần sharding; chọn Cluster khi dung lượng/QPS vượt giới hạn một node."
+        },
+        {
+          "question": "Cache **penetration**, **breakdown**, **avalanche**?",
+          "suggestion": "Phân biệt đúng 3 lỗi cache và gắn biện pháp tương ứng: Bloom/null cache, singleflight/mutex, jitter TTL.",
+          "answer": "Penetration là request liên tục vào key không tồn tại làm DB luôn bị đánh; tôi xử lý bằng Bloom filter hoặc cache null với TTL ngắn. Breakdown là hot key hết hạn khiến nhiều request đổ về DB cùng lúc; giải pháp là singleflight/mutex rebuild và prewarm key nóng. Avalanche là nhiều key hết hạn đồng thời hoặc Redis sự cố; cần rải TTL có jitter, cache warming theo lô, và cơ chế degrade để bảo vệ DB."
+        },
+        {
+          "question": "Distributed lock — `SET NX PX`, Redlock?",
+          "suggestion": "Mẫu cơ bản: `SET key token NX PX ttl` + unlock bằng Lua kiểm tra token; Redlock dùng khi cần đa node nhưng phải hiểu giới hạn.",
+          "answer": "Distributed lock cơ bản trong Redis dùng `SET lock_key token NX PX ttl` để vừa lock vừa gắn thời hạn tự hết. Khi unlock không dùng `DEL` trực tiếp, mà dùng Lua script kiểm tra token trước khi xóa để tránh xóa nhầm lock của client khác. Redlock mở rộng trên nhiều node để tăng độ chịu lỗi, nhưng vẫn có tranh luận về tính đúng đắn trong một số kịch bản mạng phân mảnh; nghiệp vụ cực kỳ nghiêm ngặt thường cân nhắc hệ thống consensus như etcd/ZooKeeper."
+        },
+        {
+          "question": "Pub/Sub vs Stream?",
+          "suggestion": "Pub/Sub cho realtime best-effort; Stream cho xử lý tin cậy hơn nhờ lưu lịch sử và consumer group.",
+          "answer": "Pub/Sub phù hợp broadcast realtime, độ trễ thấp nhưng không lưu lịch sử nên subscriber offline sẽ mất bản tin. Stream lưu message, hỗ trợ consumer group và đọc lại, phù hợp pipeline cần độ tin cậy cao hơn. Nếu nghiệp vụ cần retry, ack và theo dõi pending message, tôi chọn Stream."
+        },
+        {
+          "question": "Lệnh nguy hiểm trong production?",
+          "suggestion": "Tránh lệnh O(N) và lệnh phá hủy dữ liệu; khóa quyền vận hành bằng ACL/role.",
+          "answer": "Các lệnh như `KEYS *` có thể gây block lâu trên dataset lớn, còn `FLUSHALL` hoặc `FLUSHDB` có nguy cơ xóa dữ liệu diện rộng. Trong production tôi ưu tiên `SCAN` để duyệt dần, giới hạn quyền bằng ACL, tách tài khoản read/write/admin, và chỉ cho phép lệnh nguy hiểm qua quy trình vận hành có kiểm soát."
+        },
+        {
+          "question": "`SCAN` khác `KEYS`?",
+          "suggestion": "`SCAN` là iterator tăng dần theo batch; `KEYS` quét toàn bộ ngay lập tức và dễ gây pause lâu.",
+          "answer": "`KEYS` trả toàn bộ key khớp pattern trong một lần gọi, nên có thể rất tốn thời gian khi dữ liệu lớn. `SCAN` trả theo từng đợt với cursor, giúp giảm tác động lên Redis trong lúc hệ thống đang phục vụ traffic. Vì vậy `SCAN` phù hợp hơn cho production task như thống kê hoặc dọn dẹp theo lô."
+        },
+        {
+          "question": "HyperLogLog dùng khi nào?",
+          "suggestion": "Dùng khi cần cardinality gần đúng ở quy mô lớn, ưu tiên tiết kiệm RAM hơn độ chính xác tuyệt đối.",
+          "answer": "HyperLogLog phù hợp đếm số phần tử unique gần đúng, ví dụ UV theo ngày hoặc số thiết bị hoạt động. Ưu điểm là bộ nhớ cố định rất nhỏ so với lưu Set thật. Đổi lại là có sai số thống kê (khoảng 0.81%), nên không dùng cho bài toán cần chính xác tuyệt đối như billing."
+        },
+        {
+          "question": "Redis có thể thay **database** chính không?",
+          "suggestion": "Mặc định xem Redis là cache/data store tốc độ cao, không phải lựa chọn thay thế toàn bộ RDBMS.",
+          "answer": "Redis có thể lưu dữ liệu bền ở một số kịch bản, nhưng phần lớn hệ thống vẫn dùng Redis làm lớp tốc độ cao bên cạnh database chính. Lý do là Redis không mạnh về truy vấn quan hệ, join, transaction phức tạp và ràng buộc dữ liệu như RDBMS. Tôi chỉ cân nhắc Redis làm primary store khi domain phù hợp với mô hình key-value/stream và team chấp nhận rõ các trade-off vận hành."
+        },
+        {
+          "question": "Distributed lock Redis triển khai đúng chuẩn production thế nào?",
+          "suggestion": "Checklist: token ngẫu nhiên, TTL theo p99 + buffer, unlock bằng Lua, và có gia hạn lock an toàn cho job dài.",
+          "answer": "Triển khai production nên bắt đầu bằng `SET lock_key token NX PX ttl`, trong đó token là định danh ngẫu nhiên của owner. Unlock phải chạy Lua script kiểm tra token rồi mới `DEL`, tránh xóa lock đã thuộc về tiến trình khác. TTL cần dựa trên thời gian xử lý p99 cộng buffer; nếu job dài hơn TTL thì thêm cơ chế gia hạn định kỳ có kiểm tra token. Ngoài ra cần metric lock timeout/retry để phát hiện contention sớm."
+        },
+        {
+          "question": "Hot key trong Redis Cluster gây sự cố gì và xử lý sao?",
+          "suggestion": "Hot key dồn QPS vào một hash slot; cần tách key logic hoặc thêm tầng cache cục bộ để phân tải.",
+          "answer": "Trong Redis Cluster, mỗi key thuộc một hash slot nên hot key sẽ đẩy toàn bộ tải vào một node, gây tăng latency và dễ timeout cục bộ. Cách xử lý gồm tách key theo shard logic (ví dụ counter phân mảnh), thêm local cache ở app cho read-heavy, precompute kết quả để giảm truy cập lặp lại, và theo dõi top key theo QPS/latency để xử lý chủ động trước khi thành sự cố."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "id": "13",
+  "title": "Microservices",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Monolith vs microservices — trade-off?",
+          "suggestion": "So sánh lợi ích và chi phí vận hành của hai kiến trúc.",
+          "answer": "Monolith đơn giản hơn ở giai đoạn đầu: một codebase, một pipeline deploy, dễ debug cục bộ. Microservices cho phép tách theo domain, scale/deploy độc lập và phù hợp tổ chức nhiều team, nhưng tăng đáng kể độ phức tạp phân tán (network, observability, CI/CD, data consistency). Thực tế nhiều hệ thống bắt đầu monolith và tách dần bằng Strangler khi có nhu cầu rõ ràng."
+        },
+        {
+          "question": "**Bounded context** (DDD)?",
+          "suggestion": "Giải thích cách dùng bounded context để chia service.",
+          "answer": "Bounded context là ranh giới nghiệp vụ nơi thuật ngữ và quy tắc có ý nghĩa nhất quán. Mỗi service nên sở hữu một ngữ cảnh rõ ràng cùng dữ liệu liên quan để giảm coupling. Tránh chia service theo technical layer (controller/service/repository riêng) vì dễ tạo distributed monolith và chatty call."
+        },
+        {
+          "question": "**API Gateway** vs **BFF**?",
+          "suggestion": "Phân biệt nhiệm vụ hạ tầng chung và API theo client.",
+          "answer": "API Gateway xử lý concern dùng chung như routing, authn/authz, rate limiting, TLS termination, observability. BFF (Backend For Frontend) là lớp API tối ưu cho từng client (web/mobile), gom dữ liệu và định dạng response theo UX cụ thể. Có thể dùng cả hai: Gateway ở biên hệ thống, BFF ở lớp ứng dụng cho từng trải nghiệm."
+        },
+        {
+          "question": "Service discovery — client-side vs server-side?",
+          "suggestion": "Nêu cách phân giải địa chỉ service ở hai mô hình.",
+          "answer": "Client-side discovery: client lấy danh sách instance từ registry rồi tự chọn đích và cân bằng tải. Server-side discovery: client gọi một endpoint ổn định, phần hạ tầng (LB, ingress, service mesh, Kubernetes Service) chọn instance phía sau. Môi trường cloud/Kubernetes hiện nay thường ưu tiên server-side để client đơn giản hơn."
+        },
+        {
+          "question": "Sync (REST/gRPC) vs async (message)?",
+          "suggestion": "So sánh coupling, latency và consistency giữa sync/async.",
+          "answer": "Sync (REST/gRPC) dễ kiểm soát luồng request-response và phù hợp tác vụ cần phản hồi ngay, nhưng dễ cộng dồn latency và lan truyền lỗi theo call chain. Async messaging tách rời producer-consumer, tăng độ đàn hồi và throughput, đổi lại phải chấp nhận eventual consistency và xử lý duplicate/out-of-order. Kiến trúc thực tế thường kết hợp cả hai theo từng use case."
+        },
+        {
+          "question": "**Saga** — choreography vs orchestration?",
+          "suggestion": "Giải thích Saga và khác biệt choreography/orchestration.",
+          "answer": "Saga thay distributed transaction bằng chuỗi local transaction kèm bước bù (compensation) khi thất bại. Choreography dựa trên event giữa các service, giảm thành phần trung tâm nhưng dễ khó theo dõi khi flow phức tạp. Orchestration dùng bộ điều phối (ví dụ Temporal/Camunda/custom orchestrator) để điều khiển từng bước, dễ quan sát và thay đổi luồng hơn."
+        },
+        {
+          "question": "**Circuit breaker**, timeout, retry?",
+          "suggestion": "Nêu thứ tự áp dụng timeout/retry/circuit breaker theo best practice.",
+          "answer": "Timeout là lớp bảo vệ đầu tiên để tránh giữ tài nguyên quá lâu khi downstream treo/chậm. Retry chỉ áp dụng cho lỗi tạm thời, dùng exponential backoff + jitter để tránh retry storm; giới hạn số lần retry và tránh retry ở mọi tầng cùng lúc. Circuit breaker mở khi tỷ lệ lỗi cao để chặn gọi thêm, cho hệ thống thời gian hồi phục rồi kiểm tra lại ở trạng thái half-open."
+        },
+        {
+          "question": "**Bulkhead**?",
+          "suggestion": "Giải thích cách cô lập tài nguyên để tránh lan sự cố.",
+          "answer": "Bulkhead là kỹ thuật chia nhỏ tài nguyên (thread pool, connection pool, queue) theo nhóm workload hoặc downstream. Nếu một nhóm bị quá tải/lỗi, nhóm khác vẫn hoạt động thay vì chết dây chuyền. Pattern này đặc biệt hữu ích cho service gọi nhiều dependency với đặc tính tải khác nhau."
+        },
+        {
+          "question": "**CQRS** / **event sourcing** (ý tưởng)?",
+          "suggestion": "Nêu mục tiêu của CQRS và event sourcing, cùng chi phí.",
+          "answer": "CQRS tách mô hình ghi và đọc để tối ưu riêng cho command/query, phù hợp nghiệp vụ phức tạp hoặc nhu cầu đọc rất khác ghi. Event sourcing lưu trạng thái dưới dạng chuỗi sự kiện bất biến, thuận lợi cho audit, replay, temporal debugging. Đổi lại, cả hai làm tăng độ phức tạp mô hình dữ liệu, consistency và vận hành, nên chỉ dùng khi lợi ích vượt chi phí."
+        },
+        {
+          "question": "Distributed tracing?",
+          "suggestion": "Mô tả tracing end-to-end và công cụ phổ biến.",
+          "answer": "Distributed tracing theo dõi một request xuyên nhiều service bằng trace ID và span ID truyền qua header/context propagation. OpenTelemetry là chuẩn phổ biến để instrument và xuất trace; backend có thể là Jaeger, Zipkin, Tempo hoặc APM cloud. Tracing giúp định vị bottleneck, lỗi theo dependency chain và đo SLO theo luồng nghiệp vụ."
+        },
+        {
+          "question": "**Contract testing** (Pact)?",
+          "suggestion": "Giải thích vì sao contract test quan trọng trong release độc lập.",
+          "answer": "Contract testing xác minh producer vẫn đáp ứng kỳ vọng của consumer theo hợp đồng API/schema đã thỏa thuận. Với microservices release độc lập, đây là lớp kiểm thử giúp phát hiện breaking change sớm trước khi deploy. Nó không thay thế integration test end-to-end nhưng giảm mạnh rủi ro tương thích liên dịch vụ."
+        },
+        {
+          "question": "**Strangler fig**?",
+          "suggestion": "Mô tả cách tách monolith theo từng lát cắt nghiệp vụ.",
+          "answer": "Strangler Fig là chiến lược thay thế monolith từng phần: route một phần traffic sang service mới rồi mở rộng dần theo domain. Cách này cho phép rollback từng bước, giảm big-bang migration và rủi ro downtime. Điều kiện thành công là ranh giới domain rõ và quan sát tốt để so sánh hành vi cũ/mới."
+        },
+        {
+          "question": "Anti-pattern?",
+          "suggestion": "Liệt kê anti-pattern thường gây fail khi làm microservices.",
+          "answer": "Anti-pattern phổ biến gồm distributed monolith (service tách ra nhưng phụ thuộc chặt), chuỗi sync call quá dài, và shared database cho mọi service. Ngoài ra còn thiếu observability, thiếu idempotency/retry policy rõ ràng, và deploy không độc lập theo domain. Các lỗi này làm tăng coupling, giảm khả năng chịu lỗi và khiến vận hành khó hơn monolith."
+        },
+        {
+          "question": "**Kubernetes** — liveness vs readiness probe với microservices?",
+          "suggestion": "Phân biệt probe để tránh vừa mất traffic vừa restart sai.",
+          "answer": "Liveness probe trả lời câu hỏi tiến trình có bị kẹt cần restart không. Readiness probe quyết định pod có nhận traffic hay tạm rút khỏi Service khi phụ thuộc chưa sẵn sàng (DB, cache, warmup). Cấu hình ngưỡng quá nhạy có thể gây restart loop hoặc flapping, nên cần tách rõ tiêu chí sống và sẵn sàng."
+        },
+        {
+          "question": "**Service mesh** (Istio/Linkerd) — lợi ích?",
+          "suggestion": "Nêu lợi ích kỹ thuật và chi phí vận hành của mesh.",
+          "answer": "Service mesh cung cấp năng lực hạ tầng cho giao tiếp service-to-service như mTLS, traffic shaping/canary, timeout/retry policy và telemetry đồng nhất. Điều này giảm việc nhúng logic hạ tầng vào từng service và tăng tính nhất quán bảo mật/quan sát. Đổi lại có overhead tài nguyên và độ phức tạp vận hành cao hơn, cần cân nhắc quy mô trước khi áp dụng."
+        },
+        {
+          "question": "**Outbox pattern** — tránh mất event khi ghi DB?",
+          "suggestion": "Mô tả cơ chế ghi cùng transaction để tránh dual-write lỗi.",
+          "answer": "Outbox pattern ghi dữ liệu nghiệp vụ và bản ghi outbox trong cùng transaction DB, nên không xảy ra trạng thái commit business thành công nhưng mất event. Một relay process đọc outbox và publish sang broker theo cơ chế retry an toàn. Mô hình này đảm bảo at-least-once publish sau commit, vì vậy consumer vẫn cần idempotency."
+        },
+        {
+          "question": "**Choreography vs orchestration** trong Saga — ví dụ?",
+          "suggestion": "Đưa ví dụ thực tế để phân biệt hai cách triển khai Saga.",
+          "answer": "Choreography: `OrderCreated` phát ra broker, Payment và Inventory tự subscribe xử lý, sau đó phát event tiếp theo; ưu điểm là loose coupling nhưng dễ thành event spaghetti. Orchestration: một orchestrator gọi/tạo command cho Payment, Inventory, Shipping theo state machine và kích hoạt compensation khi cần. Cách orchestration dễ audit tiến trình và SLA hơn khi flow nhiều nhánh."
+        },
+        {
+          "question": "**Eventual consistency** — user thấy dữ liệu “chưa kịp” — xử lý UX?",
+          "suggestion": "Nêu pattern UX để giảm cảm giác lỗi khi dữ liệu trễ đồng bộ.",
+          "answer": "Khi hệ thống eventual consistency, UX nên phản ánh trạng thái trung gian thay vì giả định cập nhật tức thì. Các kỹ thuật phổ biến: optimistic UI có rollback, trạng thái `pending/processing`, push update qua WebSocket hoặc poll ngắn hạn, và thông báo rõ ràng cho người dùng. Mục tiêu là minh bạch trạng thái để tránh hiểu nhầm thành lỗi hệ thống."
+        },
+        {
+          "question": "**Idempotency-Key** header cho POST — implement?",
+          "suggestion": "Mô tả thiết kế lưu key, TTL và trả lại response cũ.",
+          "answer": "Server lưu `Idempotency-Key` cùng fingerprint request và kết quả đã xử lý (status + body) trong TTL phù hợp nghiệp vụ. Nếu nhận lại cùng key và cùng payload, trả về response cũ thay vì thực thi lại side effect. Triển khai nên dựa trên transaction/unique constraint để chống race condition khi nhiều request đến đồng thời."
+        },
+        {
+          "question": "**Distributed lock** vs **leader election** — khác gì?",
+          "suggestion": "Phân biệt mục tiêu đồng bộ tác vụ và chọn một node điều phối.",
+          "answer": "Distributed lock nhằm đảm bảo một tác vụ cụ thể chỉ do một worker thực hiện tại một thời điểm. Leader election nhằm chọn một instance làm điều phối viên chung (ví dụ chạy scheduler/cron tập trung) và tự động chuyển vai khi leader chết. Hai kỹ thuật có thể dùng cùng hệ thống nhưng giải quyết vấn đề khác nhau."
+        },
+        {
+          "question": "Outbox pattern giải quyết lỗi dual-write ra sao?",
+          "suggestion": "Giải thích cơ chế tránh lệch trạng thái giữa DB và message broker.",
+          "answer": "Dual-write lỗi xảy ra khi ghi DB và publish message là hai thao tác tách rời, có thể thành công lệch nhau. Outbox biến chúng thành một commit duy nhất trong DB: dữ liệu nghiệp vụ + bản ghi event pending. Relay đọc outbox và retry publish đến khi thành công, còn consumer xử lý idempotent để chịu được khả năng nhận trùng."
+        },
+        {
+          "question": "Saga choreography hay orchestration nên chọn theo tiêu chí nào?",
+          "suggestion": "Đưa tiêu chí chọn theo độ phức tạp flow và nhu cầu quan sát.",
+          "answer": "Choreography phù hợp flow ngắn, số service ít, và team có kỷ luật event contract tốt. Orchestration phù hợp nghiệp vụ dài nhiều nhánh, cần theo dõi trạng thái tập trung, timeout/compensation rõ ràng và audit tốt. Quyết định nên dựa trên độ phức tạp quy trình, khả năng observability hiện có và chi phí vận hành thành phần điều phối."
+        }
+      ]
+    }
+  ]
+}

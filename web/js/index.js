@@ -61,7 +61,13 @@
     const nq = normalize(q);
     for (const g of sec.groups) {
       for (const it of g.items) {
-        if (normalize(it.question).includes(nq) || normalize(it.answer).includes(nq)) return true;
+        const haystack =
+          (it.question || "") +
+          " " +
+          (it.suggestion || "") +
+          " " +
+          (it.answer || "");
+        if (normalize(haystack).includes(nq)) return true;
       }
     }
     return false;
@@ -74,9 +80,15 @@
     for (const g of sec.groups) {
       let block = "";
       for (const it of g.items) {
-        if (fq && !normalize(it.question + it.answer).includes(nfq)) continue;
+        const haystack =
+          (it.question || "") +
+          " " +
+          (it.suggestion || "") +
+          " " +
+          (it.answer || "");
+        if (fq && !normalize(haystack).includes(nfq)) continue;
         const openSearch =
-          fq.length > 0 && normalize(it.question + it.answer).includes(nfq);
+          fq.length > 0 && normalize(haystack).includes(nfq);
         const openAttr = openSearch ? " open" : "";
         block +=
           '<details class="qa"' +
@@ -87,7 +99,16 @@
           renderQuestion(it.question) +
           "</span></summary>" +
           '<div class="qa__a">' +
+          '<div class="qa__tier qa__tier--suggestion">' +
+          '<div class="qa__tier-label">Tầng 1 — Gợi ý</div>' +
+          '<div class="qa__tier-body">' +
+          renderAnswer(it.suggestion || it.answer) +
+          "</div></div>" +
+          '<div class="qa__tier qa__tier--answer mt-3">' +
+          '<div class="qa__tier-label">Tầng 2 — Chi tiết</div>' +
+          '<div class="qa__tier-body">' +
           renderAnswer(it.answer) +
+          "</div></div>" +
           "</div></details>";
       }
       if (!block) continue;
@@ -203,13 +224,57 @@
     setTheme(next);
   });
 
-  fetch("data/questions.json")
+  fetch("data/modules/manifest.json")
     .then((r) => {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     })
+    .then((manifest) => {
+      const modules = Array.isArray(manifest.modules) ? manifest.modules : [];
+      return Promise.all(
+        modules.map((m) =>
+          fetch(m.file).then((r) => {
+            if (!r.ok) throw new Error("HTTP " + r.status + " while loading " + m.file);
+            return r.json();
+          })
+        )
+      ).then((sections) => ({ meta: manifest.meta || {}, sections }));
+    })
     .then((json) => {
+      // Chuẩn hóa dữ liệu: mọi item đều có {question, suggestion, answer}
       data = json;
+      if (Array.isArray(data.sections)) {
+        data.sections.forEach((sec) => {
+          if (!sec.groups) return;
+          sec.groups.forEach((g) => {
+            if (!Array.isArray(g.items)) return;
+            g.items = g.items.map((raw) => {
+              const question = raw.question || "";
+              let suggestion = raw.suggestion;
+              let answer = raw.answer || "";
+
+              // Nếu đã có format Tầng 1/Tầng 2 trong answer, cố gắng tách
+              if (!suggestion) {
+                const m = answer.match(
+                  /\*\*Tầng 1[^\n]*\*\*([\s\S]*?)\*\*Tầng 2[^\n]*\*\*([\s\S]*)/i
+                );
+                if (m) {
+                  suggestion = m[1].trim();
+                  answer = m[2].trim();
+                }
+              }
+
+              // Nếu vẫn chưa có suggestion: lấy đoạn đầu làm gợi ý ngắn
+              if (!suggestion) {
+                const parts = answer.split(/\n{2,}/);
+                suggestion = (parts[0] || answer).trim();
+              }
+
+              return { question, suggestion, answer };
+            });
+          });
+        });
+      }
       if (data.meta.title) titleEl.textContent = data.meta.title;
       if (data.meta.description && descEl) {
         descEl.innerHTML = data.meta.description
@@ -227,7 +292,7 @@
     .catch((err) => {
       contentEl.innerHTML =
         '<div class="alert alert-warning mb-0" role="alert">' +
-        "<p class=\"mb-2\">Không tải được <code>data/questions.json</code>. Mở qua HTTP (ví dụ GitHub Pages) hoặc chạy server cục bộ.</p>" +
+        "<p class=\"mb-2\">Không tải được dữ liệu module trong <code>data/modules/</code>. Mở qua HTTP (ví dụ GitHub Pages) hoặc chạy server cục bộ.</p>" +
         "<p class=\"small text-secondary mb-0\">" +
         escapeHtml(String(err)) +
         "</p></div>";

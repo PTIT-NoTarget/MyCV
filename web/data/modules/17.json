@@ -1,0 +1,241 @@
+{
+  "id": "17",
+  "title": "Theo CV — công ty & dự án",
+  "groups": [
+    {
+      "title": "Rabiloo (10/2024 — hiện tại)",
+      "items": [
+        {
+          "question": "Làm việc khách Singapore — ngôn ngữ, quy trình, timezone?",
+          "suggestion": "Chốt yêu cầu bằng văn bản, ưu tiên async, giữ nhịp họp cố định.",
+          "answer": "Em làm theo 3 nguyên tắc: rõ nghĩa, rõ trách nhiệm, rõ deadline. Cụ thể, mọi yêu cầu sau meeting đều được em tóm tắt lại bằng tiếng Anh trong ticket (scope, acceptance criteria, out-of-scope) để tránh hiểu sai. Vì lệch timezone 1 tiếng nên em ưu tiên giao tiếp async qua ticket/comment, còn đồng bộ chỉ giữ 2 khung cố định mỗi tuần để xử lý điểm nghẽn. Em cũng dùng định dạng update ngắn mỗi ngày: hôm qua làm gì, hôm nay làm gì, blocker nào cần khách xác nhận. Cách này giúp giảm vòng lặp hỏi đáp và giữ tiến độ ổn định khi làm với team quốc tế."
+        },
+        {
+          "question": "Tích hợp SQL Accounting — giao thức, mapping dữ liệu, xử lý lệch?",
+          "suggestion": "Tách adapter, map theo bảng chuẩn, idempotent theo khóa nghiệp vụ.",
+          "answer": "Em triển khai theo mô hình adapter để tách core domain khỏi đặc thù SQL Accounting. Dữ liệu đi qua 3 bước: chuẩn hóa về model nội bộ, mapping sang schema tích hợp, rồi validate trước khi gửi. Với lệch dữ liệu (ví dụ mã thuế suất, đơn vị tính), em lưu bảng mapping có version và cơ chế fallback để tránh fail toàn bộ giao dịch. Để chống gửi trùng, mỗi chứng từ có idempotency key theo cặp `source_system + document_no`, kèm trạng thái đồng bộ để có thể retry an toàn. Ngoài ra em có log đối soát 2 chiều (request/response + checksum các trường chính) để support tra soát và xử lý sai lệch nhanh."
+        },
+        {
+          "question": "Một bug/hiểu nhầm requirement với khách nước ngoài — em xử lý và học được gì?",
+          "suggestion": "Trả lời theo STAR, nhấn vào cách khóa lại acceptance criteria.",
+          "answer": "Có lần khách nói \"invoice date theo local time\", team hiểu là timezone người dùng, nhưng ý khách là timezone pháp lý của công ty. Kết quả một số hóa đơn lệch ngày khi chạy gần nửa đêm. Em xử lý theo STAR: (S) xác định phạm vi lỗi qua log, (T) khôi phục dữ liệu đúng ngày pháp lý, (A) viết script sửa bản ghi bị lệch và bổ sung test cho các mốc DST/UTC offset, (R) ngăn lỗi tái diễn bằng cách thêm trường `business_timezone` vào cấu hình tenant và ghi rõ trong tài liệu nghiệp vụ. Bài học của em là với yêu cầu mơ hồ phải luôn yêu cầu ví dụ input/output cụ thể trước khi code."
+        },
+        {
+          "question": "Chuẩn hóa tài liệu kỹ thuật (API, mapping hóa đơn) cho team và khách — em làm gì?",
+          "suggestion": "Một nguồn tài liệu chuẩn: OpenAPI + sequence + glossary.",
+          "answer": "Em gom tài liệu về một nguồn duy nhất để giảm lệch thông tin. API được mô tả bằng OpenAPI để backend, QA, và khách cùng nhìn một định nghĩa; luồng nghiệp vụ khó thì bổ sung sequence diagram cho các bước gọi qua lại; phần thuật ngữ thì có glossary đối chiếu giữa ngôn ngữ kế toán và ngôn ngữ kỹ thuật. Mỗi thay đổi breaking đều đi kèm changelog và ví dụ request/response trước-sau. Em cũng thêm checklist review tài liệu trước release để đảm bảo tài liệu cập nhật đồng thời với code."
+        }
+      ]
+    },
+    {
+      "title": "Facenet (10/2023 — 10/2024)",
+      "items": [
+        {
+          "question": "CI/CD deploy môi trường nào? Tích hợp thuế VNPT khác SQL Accounting ra sao?",
+          "suggestion": "Nêu rõ pipeline môi trường và sự khác nhau theo vendor tax.",
+          "answer": "Bên em tách môi trường theo Dev, UAT và Production; Jenkins build artifact một lần, deploy theo cấu hình từng môi trường để đảm bảo tính nhất quán. Về tích hợp thuế VNPT so với SQL Accounting, khác nhau lớn nhất là chuẩn payload, quy tắc validate và luồng ký/phát hành hóa đơn. Em giải bằng adapter per-vendor: core giữ nghiệp vụ chung, adapter xử lý field mapping, auth, và lỗi đặc thù từng nhà cung cấp. Cách này giúp thêm vendor mới nhanh hơn, không làm rối domain chính."
+        },
+        {
+          "question": "Lý do chuyển từ Facenet sang Rabiloo?",
+          "suggestion": "Tập trung động lực phát triển: phạm vi, trách nhiệm, học hỏi.",
+          "answer": "Em chuyển việc theo hướng tích cực: ở Facenet em học được nền tảng tốt về tích hợp nghiệp vụ và CI/CD, nhưng em muốn môi trường có nhiều bài toán cross-border và yêu cầu giao tiếp trực tiếp với khách quốc tế để phát triển thêm năng lực phân tích requirement. Rabiloo cho em cơ hội đó, đồng thời mở rộng vai trò từ implement sang ownership rõ hơn ở mảng tài liệu kỹ thuật và chất lượng tích hợp. Em luôn giữ quan điểm chuyển việc để tăng mức đóng góp, không phải vì lý do tiêu cực."
+        },
+        {
+          "question": "Pipeline Jenkins em tham gia: stage nào fail hay nhất? Cách fix?",
+          "suggestion": "Hay fail ở test/integration và dependency fetch; xử lý bằng ổn định hóa.",
+          "answer": "Stage hay fail nhất là test integration do phụ thuộc môi trường ngoài và thời điểm dữ liệu. Em tách test thuần đơn vị khỏi test có phụ thuộc I/O, thêm test container cho service phụ trợ để giảm sai số môi trường. Với lỗi tải dependency không ổn định, em cấu hình mirror nội bộ và cache build để giảm timeout. Ngoài ra em chuẩn hóa quản lý credential bằng secret store và policy rotation, tránh lỗi phát sinh khi token hết hạn đột ngột trong pipeline."
+        },
+        {
+          "question": "Tích hợp phần mềm thuế — em xử lý **môi trường sandbox/UAT** thế nào trước production?",
+          "suggestion": "UAT phải giống production về luồng, khác dữ liệu và quyền phát hành.",
+          "answer": "Em xử lý theo nguyên tắc \"production-like\" ở UAT: cùng phiên bản service, cùng flow nghiệp vụ, nhưng dữ liệu được ẩn danh và tách riêng chứng thư/quyền phát hành thật. Trước go-live em chạy checklist gồm test happy path, test lỗi nghiệp vụ, test retry/idempotency và đối soát số liệu. Rollout dùng feature flag để bật theo nhóm tenant, nếu có sự cố thì tắt flag và replay từ hàng đợi hoặc bảng pending mà không mất dữ liệu."
+        }
+      ]
+    },
+    {
+      "title": "F-CIM CLOUD",
+      "items": [
+        {
+          "question": "Đo “+100% báo giá/ngày” thế nào? Module em làm sâu nhất?",
+          "suggestion": "Đo bằng baseline rõ ràng, loại nhiễu, bám KPI theo tuần.",
+          "answer": "Em đo theo baseline 4 tuần trước cải tiến: số báo giá hợp lệ/ngày trên cùng nhóm khách hàng và cùng khung giờ vận hành. Sau khi tối ưu luồng nhập liệu và phê duyệt, chỉ số tăng khoảng gấp đôi và giữ ổn định trong nhiều tuần liên tiếp, không chỉ tăng đột biến ngắn hạn. Module em làm sâu nhất là luồng báo giá từ tạo, sửa, duyệt đến chuyển đơn, bao gồm validation nghiệp vụ, chống submit trùng và audit trail. Em cũng phối hợp QA định nghĩa KPI theo funnel để chứng minh cải tiến đến từ hệ thống chứ không phải do mùa vụ."
+        },
+        {
+          "question": "Luồng nghiệp vụ **báo giá → duyệt → đặt hàng** — entity/transaction boundary em thiết kế?",
+          "suggestion": "Tách aggregate theo vòng đời chứng từ, transaction ngắn, event rõ.",
+          "answer": "Em tách 3 aggregate chính: `Quotation`, `Approval`, `Order` để tránh transaction quá lớn và giảm lock chéo. Mỗi bước chuyển trạng thái chỉ commit trong phạm vi aggregate hiện tại, sau đó phát domain event để bước sau xử lý. Ví dụ duyệt thành công mới cho phép tạo order, và thao tác này có kiểm tra idempotency để tránh double-submit khi người dùng bấm lặp. Lịch sử thay đổi lưu dạng append-only kèm actor/timestamp để vừa truy vết vừa phục vụ báo cáo kiểm toán."
+        },
+        {
+          "question": "ERP chuỗi cung ứng thép — em xử lý **đơn vị tính, quy đổi, làm tròn** thế nào?",
+          "suggestion": "Không dùng số thực; quy đổi theo bảng chuẩn có hiệu lực theo thời điểm.",
+          "answer": "Em dùng kiểu số thập phân chính xác (BigDecimal) cho toàn bộ phép tính số lượng và tiền, tuyệt đối không dùng float/double. Quy đổi đơn vị được quản lý bằng bảng hệ số có hiệu lực theo thời gian để xử lý thay đổi quy cách hàng hóa. Chính sách làm tròn tách theo ngữ cảnh: hiển thị, tính thuế, và hạch toán có thể khác nhau, nên em cấu hình rõ ràng thay vì hard-code. Em bổ sung test biên cho các trường hợp số rất nhỏ, số rất lớn và cộng dồn nhiều bước để tránh sai số tích lũy."
+        },
+        {
+          "question": "Tích hợp hệ thống thứ 3 trong F-CIM — timeout, retry, circuit breaker cụ thể?",
+          "suggestion": "Đặt timeout theo SLA, retry có backoff, mở circuit khi lỗi dây chuyền.",
+          "answer": "Em cấu hình timeout tách biệt connect/read theo SLA của từng đối tác, tránh treo luồng chính. Retry chỉ áp dụng cho lỗi tạm thời (5xx, timeout), có exponential backoff và jitter để tránh tạo bão request. Khi tỷ lệ lỗi vượt ngưỡng, circuit breaker mở để fail-fast, bảo vệ tài nguyên hệ thống nội bộ; đồng thời log cảnh báo để đội vận hành theo dõi. Với luồng bất đồng bộ, message lỗi sau nhiều lần retry sẽ chuyển sang DLQ để xử lý thủ công có kiểm soát."
+        },
+        {
+          "question": "Angular module em phụ trách — lazy loading, shared module, performance?",
+          "suggestion": "Tách feature module, lazy load theo route, tối ưu render danh sách.",
+          "answer": "Em chia module theo feature để route nào dùng mới tải, giảm kích thước bundle ban đầu. Các component dùng lại được đặt ở shared module nhưng em kiểm soát chặt để tránh phụ thuộc vòng và kéo theo import không cần thiết. Về hiệu năng render, em dùng `trackBy` cho danh sách lớn, hạn chế thao tác gây re-render toàn cây và ưu tiên chiến lược thay đổi dữ liệu rõ ràng. Kết quả là thời gian tải trang đầu và độ mượt khi thao tác bảng dữ liệu cải thiện đáng kể."
+        }
+      ]
+    },
+    {
+      "title": "TEMPLATE (PDF)",
+      "items": [
+        {
+          "question": "Engine template — POI, Doc4j, JodConverter, pipeline docx → PDF?",
+          "suggestion": "Tách pipeline rõ bước: merge dữ liệu, render tài liệu, convert PDF.",
+          "answer": "Em thiết kế pipeline 3 lớp: (1) merge dữ liệu vào mẫu docx, (2) kiểm tra tính hợp lệ template, (3) convert sang PDF bằng JodConverter/LibreOffice ở service riêng. Phần thao tác cấu trúc tài liệu dùng POI để kiểm soát placeholder và bảng động; Doc4j phù hợp khi cần xử lý theo object model cao hơn. Để chạy đồng thời ổn định, em không convert trực tiếp trong request thread mà đưa vào queue với worker pool có giới hạn tài nguyên. Cách này tránh nghẽn CPU/RAM khi nhiều người xuất file cùng lúc."
+        },
+        {
+          "question": "Merge dữ liệu vào docx — xử lý **placeholder trùng, bảng động, ảnh chèn**?",
+          "suggestion": "Chuẩn hóa placeholder theo namespace, bảng động theo template row.",
+          "answer": "Em quy ước placeholder có namespace rõ để tránh trùng ngữ nghĩa, ví dụ `customer.name`, `invoice.total`. Với bảng động, em giữ một dòng mẫu trong template rồi clone theo số bản ghi, áp style từ dòng mẫu để tài liệu đồng nhất. Ảnh chèn được kiểm tra định dạng, giới hạn kích thước và scale theo khung để không vỡ layout. Nếu template thay version mà thiếu placeholder bắt buộc, hệ thống trả lỗi sớm kèm danh sách trường thiếu để người dùng sửa đúng ngay."
+        },
+        {
+          "question": "Font/encoding tiếng Việt khi xuất PDF — em gặp lỗi gì và fix?",
+          "suggestion": "Lỗi phổ biến là thiếu glyph trên server; fix bằng embed font chuẩn.",
+          "answer": "Lỗi em gặp nhiều nhất là tiếng Việt bị lỗi dấu khi chạy trên server headless do thiếu font tương ứng. Em khắc phục bằng cách cài và embed bộ font hỗ trợ Unicode đầy đủ trong môi trường convert, đồng thời khóa phiên bản image để tránh lệch giữa môi trường. Em cũng thêm bước smoke test tài liệu mẫu có đầy đủ dấu tiếng Việt sau mỗi lần cập nhật pipeline. Nhờ vậy tránh được tình trạng chạy local đúng nhưng deploy lên server bị lỗi hiển thị."
+        },
+        {
+          "question": "Bảo mật: tránh **SSRF/path traversal** khi user chọn template path?",
+          "suggestion": "Không nhận path thô từ client; chỉ cho chọn theo templateId đã cấp quyền.",
+          "answer": "Em không cho client truyền đường dẫn file trực tiếp. Thay vào đó, client chỉ gửi `templateId`, backend tra metadata trong kho đã kiểm soát quyền truy cập. Mọi thao tác đọc file đều được canonicalize path và kiểm tra nằm trong thư mục cho phép để chặn traversal. Với URL ngoài, em chặn mặc định để giảm rủi ro SSRF; nếu bắt buộc dùng nguồn ngoài thì dùng allowlist domain và timeout/rate limit chặt chẽ."
+        }
+      ]
+    },
+    {
+      "title": "TRANSPORT MANAGEMENT",
+      "items": [
+        {
+          "question": "Tối ưu query và AOP phê duyệt?",
+          "suggestion": "Query tối ưu bằng index + giảm N+1; AOP gom logic quyền/audit.",
+          "answer": "Về query, em bắt đầu từ các truy vấn nóng rồi thêm index đúng cột lọc/sắp xếp, đồng thời tránh N+1 bằng fetch hợp lý và phân trang bắt buộc ở màn hình danh sách. Về phê duyệt, em dùng annotation custom để đánh dấu action cần kiểm tra quyền và ghi audit, sau đó xử lý tập trung trong aspect. Cách này giúp business service gọn hơn, tránh lặp logic kiểm tra ở nhiều nơi. Em cũng theo dõi execution time để xác nhận tối ưu có hiệu quả thật trên dữ liệu thực."
+        },
+        {
+          "question": "Mô hình **phê duyệt nhiều bước** — em lưu trạng thái và lịch sử thế nào?",
+          "suggestion": "Tách trạng thái hiện tại và lịch sử immutable cho từng bước duyệt.",
+          "answer": "Em lưu trạng thái hiện tại ở bản ghi chính để truy vấn nhanh, và lưu lịch sử từng bước vào bảng riêng dạng immutable để phục vụ audit. Mỗi record lịch sử có step, actor, action (approve/reject/resubmit), timestamp và comment. Khi reject, trạng thái quay về bước phù hợp theo rule nghiệp vụ; khi resubmit tạo event mới thay vì sửa đè lịch sử cũ. Thiết kế này giúp vừa đáp ứng nghiệp vụ nhiều vòng duyệt vừa đảm bảo truy vết rõ ràng."
+        },
+        {
+          "question": "`@Annotation` + AOP — ví dụ cụ thể một annotation custom và pointcut?",
+          "suggestion": "Ví dụ `@AuditApproval`, pointcut theo annotation, xử lý order với transaction.",
+          "answer": "Ví dụ em dùng `@AuditApproval(action = \"APPROVE_ORDER\")` gắn trên method nghiệp vụ. Aspect có pointcut bắt các method mang annotation này, lấy thông tin user từ security context, thời gian xử lý, kết quả thành công/thất bại rồi ghi vào audit log. Em đặt thứ tự aspect để kiểm tra quyền chạy trước phần ghi log chi tiết, và đảm bảo transaction boundary rõ để log không phản ánh sai trạng thái commit. Nhờ vậy có log nhất quán mà không phải viết tay trong từng service."
+        },
+        {
+          "question": "Theo dõi đơn hàng/vận chuyển — event timeline cho user và báo cáo?",
+          "suggestion": "Dùng event log append-only, chuẩn hóa event type, truy vấn theo orderId.",
+          "answer": "Em xây timeline dựa trên event log append-only để không mất lịch sử thay đổi. Mỗi event có `orderId`, `eventType`, `occurredAt`, actor/source và payload rút gọn đủ cho UI hiển thị. User xem timeline theo trình tự thời gian, còn báo cáo tổng hợp nhóm theo event type/trạng thái và khoảng thời gian. Em thêm index theo `orderId + occurredAt` để truy vấn nhanh, và có cơ chế replay nếu cần tái tạo báo cáo."
+        }
+      ]
+    },
+    {
+      "title": "POS (cá nhân)",
+      "items": [
+        {
+          "question": "Tingee — callback, idempotency? Docker + Nginx + GHA production?",
+          "suggestion": "Callback phải verify chữ ký và idempotent; deploy chuẩn qua CI/CD.",
+          "answer": "Với callback thanh toán, em kiểm tra chữ ký request trước khi xử lý và dùng idempotency key theo mã giao dịch để chống cập nhật trùng. Nếu callback đến lặp hoặc đến sai thứ tự, hệ thống vẫn đưa về trạng thái cuối nhất quán. Phần production em đóng gói bằng Docker, Nginx làm reverse proxy/SSL termination, pipeline GitHub Actions build và deploy theo tag. Secret quản lý qua biến môi trường an toàn, DB có backup định kỳ và kiểm tra khôi phục thử để đảm bảo phương án DR dùng được."
+        },
+        {
+          "question": "Nghiệp vụ cửa hàng: **tồn kho âm, đổi trả, giảm giá** — em model thế nào?",
+          "suggestion": "Lấy stock ledger làm nguồn sự thật, tách rule theo loại giao dịch.",
+          "answer": "Em model tồn kho theo ledger: mọi nhập/xuất/điều chỉnh đều là một dòng giao dịch có tham chiếu chứng từ. Tồn hiện tại là kết quả tổng hợp từ ledger nên truy vết được nguồn gốc thay đổi. Với tồn kho âm, em cho phép hoặc chặn theo cấu hình cửa hàng; nếu cho phép thì đánh dấu cảnh báo và bắt buộc bù trừ sau. Đổi trả được xử lý như giao dịch đảo chiều có liên kết hóa đơn gốc, còn giảm giá tách mức dòng và mức hóa đơn để báo cáo biên lợi nhuận chính xác."
+        },
+        {
+          "question": "Offline/ mất mạng tại quầy — có chiến lược gì (nếu có/không)?",
+          "suggestion": "Trung thực về hiện trạng; nếu chưa full offline thì nêu lộ trình rõ.",
+          "answer": "Hiện tại em hỗ trợ mức chịu lỗi cơ bản chứ chưa full offline-first. Khi mất mạng ngắn, frontend giữ thao tác ở local queue và retry khi kết nối lại; các giao dịch chưa đồng bộ được đánh dấu rõ để thu ngân không nhầm là đã hoàn tất. Em chưa mở hoàn toàn bán offline vì còn rủi ro xung đột tồn kho và thanh toán. Hướng cải tiến tiếp theo là thêm cơ chế versioning bản ghi và conflict resolution theo rule nghiệp vụ."
+        },
+        {
+          "question": "Giám sát production: log, metric, alert — em dùng gì?",
+          "suggestion": "Bắt đầu từ health check + log chuẩn hóa + alert theo SLA.",
+          "answer": "Em chuẩn hóa log theo cấu trúc có requestId để trace nhanh theo từng giao dịch. Metric tối thiểu gồm latency, error rate, throughput và trạng thái kết nối DB/queue. Em đặt alert theo ngưỡng SLA, ví dụ tỷ lệ lỗi tăng đột biến hoặc thời gian đáp ứng vượt ngưỡng liên tục. Ngoài ra có health check định kỳ để hệ thống giám sát tự động phát hiện instance lỗi và cảnh báo sớm."
+        }
+      ]
+    },
+    {
+      "title": "CareerCoach (cá nhân)",
+      "items": [
+        {
+          "question": "Đồng nhất CV Web/Mobile? Gemini — rate limit, privacy?",
+          "suggestion": "Backend làm nguồn chuẩn dữ liệu CV, AI gọi qua lớp kiểm soát trung gian.",
+          "answer": "Em để backend là nguồn chuẩn (canonical) cho schema CV, web và mobile chỉ render theo cùng một contract để tránh lệch format. Với Gemini, mọi request đi qua service trung gian để áp quota, rate limit theo user, retry có kiểm soát và ghi log tối thiểu. Em không để client giữ API key, đồng thời lọc dữ liệu nhạy cảm trước khi gửi sang mô hình. Quyền truy cập dùng Keycloak, file đính kèm lưu MinIO với chính sách private và signed URL ngắn hạn."
+        },
+        {
+          "question": "Schema JSON CV **chuẩn hóa** giữa Flutter và Vue — versioning?",
+          "suggestion": "Dùng version trong payload và giữ backward compatibility theo lộ trình.",
+          "answer": "Em thêm `schemaVersion` trong payload CV để backend hiểu và chuyển đổi khi cần. Nguyên tắc là thay đổi cộng thêm (additive) trước, field cũ deprecate theo chu kỳ thay vì xóa ngay. Backend có lớp mapper chuyển đổi giữa version cũ và mới để client chưa kịp cập nhật vẫn hoạt động. Khi cần breaking change, em phát hành tài liệu migration và bật cảnh báo sớm trên log để theo dõi tỷ lệ client còn dùng version cũ."
+        },
+        {
+          "question": "**Prompt injection** / abuse API Gemini — biện pháp?",
+          "suggestion": "Tách vai trò prompt, lọc input, giới hạn chi phí, chặn lạm dụng.",
+          "answer": "Em tách rõ system prompt ở backend và không cho input người dùng ghi đè chỉ thị hệ thống. Trước khi gọi mô hình, em kiểm tra độ dài, lọc nội dung nhạy cảm, và áp chính sách từ chối với mẫu prompt nguy hiểm. Ở mức vận hành, em giới hạn token và số lần gọi theo user/IP để kiểm soát chi phí và chống abuse. Log chỉ giữ metadata cần thiết, không lưu thô dữ liệu nhạy cảm để giảm rủi ro lộ thông tin."
+        },
+        {
+          "question": "Keycloak realm/client — phân quyền role cho tính năng phỏng vấn ảo?",
+          "suggestion": "Thiết kế role theo use-case, map claim sang authority ở backend.",
+          "answer": "Em tách role theo hành vi thực tế: user thường, premium, admin và các scope cho thao tác nhạy cảm. Token từ Keycloak chứa realm/client roles, backend map claim sang authority trong Spring Security để kiểm tra ở mức endpoint và business method. Các action quan trọng như xuất CV hoặc gọi AI nâng cao đều có policy riêng thay vì chỉ dựa vào một role tổng quát. Cách này giúp phân quyền rõ, dễ mở rộng khi sản phẩm thêm gói tính năng."
+        },
+        {
+          "question": "MinIO lưu asset (CV export, file đính kèm) — lifecycle và backup?",
+          "suggestion": "Private-by-default, signed URL ngắn hạn, lifecycle tách theo loại file.",
+          "answer": "Em đặt bucket policy mặc định private, truy cập file qua signed URL có thời hạn ngắn. Lifecycle rule tách theo loại asset: file tạm (preview, export nháp) tự xóa sớm, file chính giữ lâu hơn theo nhu cầu nghiệp vụ. Backup thực hiện định kỳ sang storage độc lập và có kiểm tra restore thử để đảm bảo bản backup dùng được khi sự cố. Ngoài ra em bật versioning cho bucket quan trọng để giảm rủi ro ghi đè nhầm."
+        }
+      ]
+    },
+    {
+      "title": "SocialNetwork (cá nhân)",
+      "items": [
+        {
+          "question": "WebSocket scale? Feed algorithm?",
+          "suggestion": "Scale realtime bằng pub/sub + stateless node; feed bắt đầu từ rule đơn giản.",
+          "answer": "Để scale WebSocket, em giữ node stateless và dùng Redis pub/sub để broadcast sự kiện giữa nhiều instance, tránh phụ thuộc một server duy nhất. Ở lớp cân bằng tải, em ưu tiên cấu hình ổn định session khi cần và có heartbeat để dọn kết nối chết. Feed algorithm em bắt đầu từ chronological có trọng số nhẹ (độ mới, tương tác cơ bản), vì dễ kiểm soát và dễ debug. Khi dữ liệu lớn hơn mới tăng dần độ phức tạp bằng feature ranking theo nhóm người dùng."
+        },
+        {
+          "question": "**Saga** distributed transaction — ví dụ một luồng cụ thể (post + notification + counter)?",
+          "suggestion": "Nêu một saga thực tế và bước bù trừ khi service sau thất bại.",
+          "answer": "Ví dụ luồng tạo post: service Post ghi bản ghi thành công rồi phát event `PostCreated`; service Counter tăng số lượng bài viết; service Notification gửi thông báo follower. Nếu Notification lỗi kéo dài, saga không rollback post, nhưng tạo tác vụ bù để retry gửi thông báo sau và đánh dấu trạng thái chưa hoàn tất. Mỗi consumer xử lý idempotent theo eventId để tránh đếm trùng hoặc gửi trùng khi broker redelivery. Cách này chấp nhận eventual consistency nhưng giữ hệ thống ổn định và có khả năng phục hồi."
+        },
+        {
+          "question": "Spring Cloud Gateway — route, filter JWT, rate limit?",
+          "suggestion": "Định tuyến theo Path, filter JWT ở gateway, rate limit theo user/IP.",
+          "answer": "Em cấu hình route theo predicate Path và method để tách rõ traffic từng service. JWT được kiểm tra chữ ký và claim ngay tại gateway, chỉ forward request hợp lệ vào backend. Các filter như `StripPrefix`, thêm header truy vết, và chuẩn hóa lỗi giúp service phía sau đơn giản hơn. Rate limit áp theo key phù hợp (userId nếu đã auth, fallback IP nếu chưa auth) để bảo vệ hệ thống trước burst traffic."
+        },
+        {
+          "question": "Consul — health check fail thì service consumer xử lý ra sao?",
+          "suggestion": "Khi check fail, loại instance lỗi khỏi chọn tuyến và degrade có kiểm soát.",
+          "answer": "Khi health check fail, instance đó sẽ bị loại khỏi danh sách service discovery nên client không tiếp tục route vào node lỗi. Ở phía consumer, em cấu hình retry sang instance khác với số lần giới hạn và timeout ngắn. Nếu lỗi lan rộng, circuit breaker mở để fail-fast và trả fallback phù hợp thay vì giữ kết nối chờ lâu. Đồng thời có cảnh báo để đội vận hành xử lý nguyên nhân gốc."
+        },
+        {
+          "question": "Feed **fan-out on write vs read** — em chọn gì và vì sao?",
+          "suggestion": "Chọn hybrid: user thường fan-out on write, user rất hot xử lý khác.",
+          "answer": "Em ưu tiên mô hình hybrid thay vì chọn một cực. Với đa số user, fan-out on write cho trải nghiệm đọc nhanh vì feed đã được chuẩn bị sẵn. Với user cực hot có lượng follower lớn, em chuyển sang fan-out on read hoặc batching để tránh bùng nổ ghi và chi phí storage. Quyết định dựa trên ngưỡng follower và tải thực tế, có metric theo dõi để điều chỉnh tự động."
+        },
+        {
+          "question": "Elasticsearch index **post/comment** — mapping tiếng Việt, highlight?",
+          "suggestion": "Thiết kế multi-field: text để search, keyword để sort/filter chính xác.",
+          "answer": "Em khai báo multi-field cho các trường nội dung: một field `text` để full-text search, một field `keyword` để lọc/sort chính xác. Với tiếng Việt, em chọn analyzer phù hợp và kiểm thử trực tiếp trên bộ dữ liệu thật để đảm bảo tokenization và dấu tiếng Việt cho kết quả chấp nhận được. Highlight chỉ bật trên field tìm kiếm chính để giảm chi phí render. Em cũng đặt giới hạn độ dài và refresh policy hợp lý để cân bằng giữa tốc độ index và độ tươi dữ liệu."
+        }
+      ]
+    },
+    {
+      "title": "ICPC",
+      "items": [
+        {
+          "question": "Bài ấn tượng? ICPC giúp engineer thế nào?",
+          "suggestion": "Kể một bài cụ thể và liên hệ trực tiếp với kỹ năng làm sản phẩm.",
+          "answer": "Bài em ấn tượng là dạng tối ưu với nhiều ràng buộc khiến cách brute-force chắc chắn TLE. Em học được cách mô hình hóa bài toán, chọn cấu trúc dữ liệu phù hợp và luôn kiểm tra edge case trước khi tối ưu. Khi đi làm, tư duy đó giúp em debug có hệ thống: giả thuyết rõ, thu hẹp phạm vi, đo đạc trước và sau khi sửa. ICPC không thay thế kiến thức sản phẩm, nhưng rèn phản xạ giải quyết vấn đề dưới áp lực rất tốt."
+        },
+        {
+          "question": "Áp dụng tư duy thi đấu vào debug production — ví dụ?",
+          "suggestion": "Debug như giải bài: đặt invariant, tái hiện lỗi, loại trừ dần.",
+          "answer": "Khi gặp lỗi production tăng timeout bất thường, em không sửa theo cảm tính mà đi theo quy trình: đặt invariant cho luồng đúng, tái hiện bằng dữ liệu gần thực tế, rồi loại trừ từng lớp (network, DB, cache, code). Em thêm log đo thời gian ở các điểm then chốt để xác định bottleneck thật sự. Sau khi fix, em chạy lại kịch bản tải và so sánh metric trước-sau để xác nhận hiệu quả. Cách làm này giống tư duy thi đấu: dựa vào bằng chứng thay vì đoán mù."
+        }
+      ]
+    }
+  ]
+}

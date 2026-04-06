@@ -1,0 +1,41 @@
+{
+  "id": "18",
+  "title": "Hành vi & câu hỏi tổng hợp",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Bất đồng kỹ thuật với PM/peer — xử lý?",
+          "suggestion": "Giải quyết bằng dữ liệu và mục tiêu chung, không tranh luận theo cảm tính.",
+          "answer": "Khi có bất đồng kỹ thuật, em luôn bắt đầu từ mục tiêu sản phẩm (time-to-market, ổn định, chi phí) rồi đưa dữ kiện: benchmark, effort estimate, rủi ro vận hành. Nếu chưa đủ rõ, em đề xuất POC nhỏ có timebox để quyết định nhanh bằng kết quả thực tế. Cách này giúp team tranh luận lành mạnh và chốt phương án dựa trên tác động business thay vì ý kiến cá nhân."
+        },
+        {
+          "question": "Deadline gấp — ưu tiên?",
+          "suggestion": "Ưu tiên theo tác động business: chốt must-have, cắt scope có kiểm soát, cập nhật sớm.",
+          "answer": "Với deadline gấp, em chia việc theo mức độ bắt buộc: must-have để release an toàn, should-have để bổ sung sau. Em thống nhất sớm với PM về phần cắt scope, đồng thời tập trung test vào luồng rủi ro cao thay vì dàn đều. Trong quá trình làm, em cập nhật tiến độ và blocker hằng ngày để tránh bất ngờ vào cuối sprint."
+        },
+        {
+          "question": "Bug production nghiêm trọng?",
+          "suggestion": "Xử lý theo playbook: cô lập ảnh hưởng, khôi phục dịch vụ nhanh, rồi mới tối ưu nguyên nhân gốc.",
+          "answer": "Khi gặp bug production nghiêm trọng, em ưu tiên khôi phục dịch vụ trước: triage mức ảnh hưởng, bật cảnh báo, quyết định hotfix hay rollback tùy rủi ro. Sau khi hệ thống ổn định, em reproduce và phân tích root cause, bổ sung test/monitoring để tránh lặp lại. Em luôn làm postmortem ngắn với team để chốt action item và người chịu trách nhiệm rõ ràng."
+        },
+        {
+          "question": "Điểm yếu và cách cải thiện?",
+          "suggestion": "Nêu điểm yếu thật nhưng có kế hoạch cải thiện đo được.",
+          "answer": "Một điểm em từng gặp là đôi khi đi quá sâu kỹ thuật ở giai đoạn đầu, dễ tốn thời gian cho giải pháp chưa cần thiết. Cách em cải thiện là timebox phần nghiên cứu, chốt tiêu chí quyết định trước và sync sớm với PM/tech lead. Nhờ vậy gần đây em ra quyết định nhanh hơn và giữ được cân bằng giữa chất lượng kỹ thuật với deadline."
+        },
+        {
+          "question": "Thiết kế lại hệ thống lớn — thay đổi gì?",
+          "suggestion": "Thiết kế lại theo thứ tự: đo lường trước, tách boundary rõ, nâng độ tin cậy rồi mới mở rộng kiến trúc.",
+          "answer": "Nếu thiết kế lại hệ thống lớn, em không bắt đầu bằng việc chia microservices ngay mà ưu tiên observability trước (log, metric, trace) để biết điểm nghẽn thật sự. Sau đó em chuẩn hóa test và tách boundary theo domain để giảm coupling, rồi mới cân nhắc event-driven ở các luồng cần bất đồng bộ. Cách làm này giúp giảm rủi ro rewrite lớn và vẫn tạo cải thiện rõ theo từng giai đoạn."
+        },
+        {
+          "question": "Câu hỏi ngược lại cho công ty?",
+          "suggestion": "Hỏi vào kỳ vọng công việc, chất lượng kỹ thuật và cơ hội phát triển trong 6-12 tháng.",
+          "answer": "Em thường hỏi 3 nhóm: (1) roadmap sản phẩm và ưu tiên kỹ thuật trong 6-12 tháng tới, (2) định nghĩa thành công của vị trí này sau 3-6 tháng, (3) quy trình engineering như code review, release, incident/on-call và hỗ trợ học tập. Những câu hỏi này giúp em hiểu rõ mức độ phù hợp hai chiều và cách em có thể tạo giá trị sớm cho team."
+        }
+      ]
+    }
+  ]
+}

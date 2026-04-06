@@ -1,0 +1,46 @@
+{
+  "id": "4",
+  "title": "JVM, bộ nhớ & GC",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Vùng nhớ heap, stack, metaspace?",
+          "suggestion": "- Phân biệt dữ liệu theo vòng đời: stack (theo thread), heap (object dùng chung), metaspace (metadata class).\n- Nêu nhanh lỗi thường gặp: `StackOverflowError`, `OutOfMemoryError: Java heap space`, `OutOfMemoryError: Metaspace`.",
+          "answer": "- **Stack** là bộ nhớ theo từng thread, chứa stack frame của lời gọi hàm, biến cục bộ và tham chiếu; tự giải phóng khi method return.\n- **Heap** là vùng dùng chung cho object/array, GC quản lý; thường chia theo thế hệ để tối ưu thu gom object sống ngắn.\n- **Metaspace** (từ Java 8) lưu metadata class ở native memory thay cho PermGen; nếu nạp class động nhiều có thể bị `OutOfMemoryError: Metaspace`.\n- Trong vận hành, lỗi stack thường do đệ quy sâu, còn lỗi heap/metaspace thường cần xem heap dump và class loading pattern."
+        },
+        {
+          "question": "GC cơ bản — Minor vs Major/Full?",
+          "suggestion": "- Minor GC dọn Young nhanh và diễn ra thường xuyên.\n- Major/Full GC đụng Old/toàn heap, pause thường dài hơn nên cần theo dõi latency.",
+          "answer": "- **Minor GC** chủ yếu thu gom vùng Young (Eden/Survivor), thường nhanh vì đa số object chết sớm.\n- **Major GC** tập trung vào Old generation; **Full GC** thường là thu gom toàn bộ heap (và có thể kèm metaspace tùy collector/điều kiện).\n- Cả hai đều có pha Stop-The-World, nhưng Full GC thường gây pause dài hơn và ảnh hưởng SLA rõ hơn.\n- Khi phỏng vấn, nên nhấn mạnh: tối ưu cấp phát object, sizing heap hợp lý và đọc GC log quan trọng hơn việc thuộc lòng thuật toán."
+        },
+        {
+          "question": "G1, ZGC, Shenandoah — ý tưởng chung?",
+          "suggestion": "- Java 17/21 mặc định thường là G1, cân bằng throughput và pause.\n- ZGC/Shenandoah ưu tiên pause thấp, hợp hệ cần latency ổn định.",
+          "answer": "- **G1** chia heap thành nhiều region, ưu tiên thu gom vùng có nhiều rác để đạt mục tiêu pause (`MaxGCPauseMillis`) tương đối ổn định; đây là lựa chọn mặc định phổ biến trên JDK hiện đại.\n- **ZGC** và **Shenandoah** thiết kế cho pause rất thấp bằng concurrent nhiều pha, phù hợp dịch vụ nhạy latency hoặc heap lớn.\n- Trade-off thường là chi phí CPU/overhead cao hơn và cần benchmark theo workload thật, không chọn theo \"trend\".\n- Thực tế production: bắt đầu với G1 + monitoring, chỉ đổi collector khi có bằng chứng về vấn đề pause tail-latency."
+        },
+        {
+          "question": "`StrongReference`, `SoftReference`, `WeakReference`, `PhantomReference`?",
+          "suggestion": "- Trả lời theo mức độ \"dễ bị GC\": Strong -> Soft -> Weak -> Phantom.\n- Gắn với use case: cache, map key, cleanup tài nguyên native.",
+          "answer": "- **StrongReference** là mặc định: còn reachable thì object không bị GC.\n- **SoftReference** có thể bị thu khi JVM thiếu bộ nhớ, từng dùng cho cache nhưng hành vi phụ thuộc GC nên khó dự đoán cho cache quan trọng.\n- **WeakReference** bị thu ở chu kỳ GC kế tiếp nếu không còn strong ref; hay dùng trong `WeakHashMap` để tránh giữ key quá lâu.\n- **PhantomReference** luôn trả `null`, dùng với `ReferenceQueue` để biết object đã sẵn sàng thu hồi và làm cleanup tài nguyên ngoài heap an toàn hơn `finalize`."
+        },
+        {
+          "question": "Công cụ phân tích: heap dump, MAT, async profiler?",
+          "suggestion": "- Chọn đúng công cụ theo triệu chứng: memory leak, CPU nóng, hay allocation cao.\n- Luôn thu thập số liệu trước khi tối ưu.",
+          "answer": "- Khi nghi **memory leak**, thường lấy heap dump bằng `jcmd` rồi phân tích bằng Eclipse MAT (dominator tree, retained size, GC roots).\n- Khi nghi **CPU bottleneck** hoặc allocation churn, dùng async-profiler hoặc JFR để xem flame graph và hotspot method.\n- VisualVM/JMC phù hợp phân tích nhanh tại môi trường dev/staging; production nên ưu tiên công cụ overhead thấp và có cửa sổ đo rõ ràng.\n- Câu trả lời phỏng vấn tốt là mô tả được \"triệu chứng -> công cụ -> kết luận -> hành động\" thay vì chỉ liệt kê tên tool."
+        },
+        {
+          "question": "Safepoint / STW — vì sao một số tác vụ JVM gây “pause” dài?",
+          "suggestion": "- Safepoint là điểm JVM yêu cầu thread dừng để làm việc toàn cục.\n- Pause dài có thể đến từ GC, deoptimization, bias revocation hoặc thread chậm vào safepoint.",
+          "answer": "- JVM cần **safepoint** để thực hiện các thao tác đòi hỏi trạng thái nhất quán toàn bộ VM như một số pha GC, deoptimization, class redefinition.\n- Stop-The-World không chỉ do GC; đôi khi pause dài vì \"time to safepoint\" lớn (thread bận native/blocking hoặc vòng lặp khó ngắt).\n- `System.gc()` có thể kích hoạt GC tốn kém nên thường tránh trong code ứng dụng.\n- Thực tế nên dùng JFR/GC log để tách bạch: thời gian vào safepoint, thời gian dừng thực tế, và nguyên nhân cụ thể của pause."
+        },
+        {
+          "question": "`DirectByteBuffer` / off-heap — khi nào dùng? Rủi ro?",
+          "suggestion": "- Dùng khi cần I/O hiệu năng cao, giảm copy giữa Java heap và native.\n- Theo dõi giới hạn direct memory và vòng đời buffer để tránh OOM khó debug.",
+          "answer": "- `DirectByteBuffer` cấp phát ngoài heap nên phù hợp networking/file I/O hiệu năng cao (ví dụ Netty, NIO) để giảm số lần copy.\n- Off-heap **không** nằm trong Java heap nhưng vẫn bị giới hạn (ví dụ `MaxDirectMemorySize`) và có thể gây `OutOfMemoryError: Direct buffer memory`.\n- Giải phóng phụ thuộc lifecycle/cleaner nên nếu giữ reference lâu hoặc pool sai cách sẽ tạo \"leak\" native memory dù heap còn trống.\n- Trade-off là tăng độ phức tạp vận hành; chỉ nên dùng khi có benchmark cho thấy heap buffer là điểm nghẽn thực sự."
+        }
+      ]
+    }
+  ]
+}

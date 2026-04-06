@@ -1,0 +1,246 @@
+{
+  "id": "19",
+  "title": "Nghiệp vụ & thiết kế hệ thống (khó)",
+  "groups": [
+    {
+      "title": "Gửi email / thông báo cho ~1 triệu user",
+      "items": [
+        {
+          "question": "Thiết kế gửi 1 triệu email marketing hoặc thông báo — không chặn API, không vượt quota nhà cung cấp?",
+          "suggestion": "API chỉ nhận request rồi đẩy queue; worker gửi theo quota + retry/DLQ + idempotency.",
+          "answer": "Thiết kế chuẩn là tách `accept` và `deliver`: API ghi job vào queue rồi trả ngay để không giữ HTTP connection. Worker pool gửi theo token-bucket/rate limiter bám quota provider, lỗi 429/5xx thì exponential backoff và đẩy DLQ khi vượt ngưỡng retry. Để chống gửi trùng, dùng khóa idempotent `(campaignId,userId)` ở DB hoặc dedupe store và luôn cập nhật trạng thái `pending/sent/bounced/complaint`. Trade-off: queue + worker tăng độ phức tạp vận hành nhưng đổi lại hệ thống chịu tải đột biến tốt, dễ quan sát backlog và mở rộng ngang."
+        }
+      ]
+    },
+    {
+      "title": "Import file Excel ~1 triệu dòng",
+      "items": [
+        {
+          "question": "User upload Excel rất lớn — tránh OOM, tránh khóa transaction quá lâu?",
+          "suggestion": "Parse streaming + xử lý async + batch insert/staging, không giữ 1 transaction cho cả file.",
+          "answer": "Không parse toàn bộ Excel vào RAM; dùng reader dạng streaming (POI SAX/XSSFReader) để đọc theo dòng, đẩy dữ liệu vào pipeline validate rồi ghi batch. Dữ liệu lớn nên upload object storage, tạo job async và cho UI poll progress; DB ghi theo lô nhỏ hoặc dùng `COPY` vào staging table rồi merge. Trade-off: staging + merge tốn thêm bước ETL nhưng tránh khóa transaction dài, rollback nhẹ hơn, và cho phép báo lỗi theo từng dòng. Nếu nghiệp vụ chấp nhận, CSV thường rẻ hơn Excel về CPU/RAM và vận hành."
+        }
+      ]
+    },
+    {
+      "title": "Thanh toán / webhook lặp lại",
+      "items": [
+        {
+          "question": "Cổng thanh toán gửi callback trùng — đảm bảo đúng một lần cập nhật đơn?",
+          "suggestion": "Idempotent bằng unique event/payment id + verify chữ ký webhook + xử lý nhanh.",
+          "answer": "Webhook thường là at-least-once nên phải giả định callback trùng hoặc đến sai thứ tự. Thiết kế an toàn là lưu `eventId/paymentId` với unique constraint; trong transaction nếu đơn đã `PAID` thì trả 2xx ngay để cổng ngừng retry. Luôn verify chữ ký HMAC/timestamp trước khi xử lý để chống giả mạo hoặc replay. Trade-off: thêm bảng dedupe và luồng async phức tạp hơn, nhưng loại được race condition khi nhiều callback tới đồng thời."
+        }
+      ]
+    },
+    {
+      "title": "Báo cáo nặng làm chậm OLTP",
+      "items": [
+        {
+          "question": "Report tổng hợp quét nhiều tháng — không làm sập DB transaction?",
+          "suggestion": "Tách workload đọc nặng khỏi OLTP: replica/materialized view/pre-aggregate/warehouse.",
+          "answer": "Không nên để query report nặng chạy trực tiếp trên primary OLTP giờ cao điểm. Cách thực tế: đọc từ read replica, dùng materialized view hoặc bảng pre-aggregate theo chu kỳ, và đẩy nhu cầu phân tích sâu sang kho dữ liệu OLAP. Trade-off chính là độ tươi dữ liệu: càng tách mạnh thì càng có độ trễ vài phút/giờ, nhưng đổi lại bảo vệ latency giao dịch cốt lõi. Nên đặt guardrail query timeout và quota tài nguyên cho endpoint báo cáo."
+        }
+      ]
+    },
+    {
+      "title": "Khóa phân tán & đặt hàng tồn kho",
+      "items": [
+        {
+          "question": "Hai request cùng mua hết tồn — xử lý?",
+          "suggestion": "Atomically reserve stock (`UPDATE ... WHERE stock>=qty`) + idempotency; cân nhắc Redis token.",
+          "answer": "Cốt lõi là thao tác trừ tồn phải atomic: `UPDATE inventory SET stock = stock - ? WHERE sku=? AND stock>=?` rồi kiểm tra affected rows. Có thể thêm optimistic lock (`version`) cho ngữ cảnh cần đọc-sửa-ghi rõ ràng, hoặc dùng Redis/Lua để chặn oversell ở lớp đệm trước khi ghi DB. Trade-off: serializable isolation đúng mạnh nhưng giảm throughput; mô hình cache token nhanh hơn nhưng cần cơ chế reconcile với DB nguồn thật. Luôn gắn idempotency key cho lệnh đặt hàng để retry không tạo đơn trùng."
+        }
+      ]
+    },
+    {
+      "title": "Phân quyền phức tạp (ERP)",
+      "items": [
+        {
+          "question": "Phân quyền theo vai trò + chi nhánh + dữ liệu — thiết kế?",
+          "suggestion": "RBAC cho quyền thô, ABAC/RLS cho quyền theo dữ liệu; audit mọi hành động nhạy cảm.",
+          "answer": "Thực tế nên tách 2 lớp: RBAC quyết định user 'được làm gì', còn điều kiện chi nhánh/đối tượng dữ liệu xử lý bằng ABAC hoặc Row-Level Security theo `tenant/org/branch`. Với nghiệp vụ ERP phức tạp, policy engine (ví dụ OPA) giúp tách rule khỏi code và version hóa chính sách. Trade-off: RLS trong DB giảm rủi ro quên filter nhưng khó debug hơn; filter ở app dễ quan sát hơn nhưng dễ sai sót khi thêm query mới. Bắt buộc có audit log immutable cho thao tác nhạy cảm."
+        }
+      ]
+    },
+    {
+      "title": "Đồng bộ dữ liệu giữa hệ thống và phần mềm kế toán (liên quan SQL Accounting / VNPT)",
+      "items": [
+        {
+          "question": "Đối soát và retry khi lệch?",
+          "suggestion": "Outbox + correlation id + job đối soát định kỳ; sai lệch xử lý bằng compensation.",
+          "answer": "Đồng bộ liên hệ thống nên dùng transactional outbox để không mất sự kiện khi DB commit thành công nhưng publish thất bại. Mỗi bản ghi cần correlation id để truy vết end-to-end, và có batch reconciliation (ví dụ cuối ngày) để phát hiện chênh lệch. Khi lệch dữ liệu tài chính, không sửa đè mà tạo nghiệp vụ bù trừ/điều chỉnh theo quy trình kế toán. Trade-off: eventual consistency chậm tức thời, nhưng an toàn và audit-friendly hơn 2-phase commit giữa nhiều hệ thống."
+        }
+      ]
+    },
+    {
+      "title": "Tạo PDF hàng loạt (liên quan dự án TEMPLATE)",
+      "items": [
+        {
+          "question": "Nhiều request render PDF đồng thời — tránh quá tải CPU?",
+          "suggestion": "Đẩy render vào queue, giới hạn concurrency worker, cache template/font, đặt timeout.",
+          "answer": "Render PDF là CPU/memory intensive nên không nên chạy trực tiếp trên thread request. Thiết kế phổ biến: API nhận job, worker xử lý theo hàng đợi với concurrency cố định theo số core, đồng thời cache template/font để giảm warm-up. Cần timeout + circuit breaker cho engine render và cơ chế retry có giới hạn. Trade-off: tăng độ trễ phản hồi người dùng, nhưng đổi lại tránh làm nghẽn toàn bộ API khi burst."
+        }
+      ]
+    },
+    {
+      "title": "Chat realtime đa máy chủ (SocialNetwork)",
+      "items": [
+        {
+          "question": "User A và B kết nối hai node khác nhau?",
+          "suggestion": "Dùng message broker liên node; node nào giữ socket thì push xuống client cục bộ.",
+          "answer": "Mỗi node WebSocket chỉ quản lý các kết nối cục bộ, nên tin nhắn phải đi qua bus chung (Redis pub/sub, NATS, Kafka, RabbitMQ). Khi A gửi tin, node A publish theo `conversationId`; node B nhận event rồi đẩy xuống socket của B nếu đang online. Trade-off: Redis pub/sub độ trễ thấp, dễ vận hành nhưng yếu về durability; Kafka mạnh về lưu vết/replay nhưng phức tạp và nặng hơn cho chat nhỏ. Nên có persistence message riêng để hỗ trợ offline sync."
+        }
+      ]
+    },
+    {
+      "title": "API LLM (CareerCoach / Gemini)",
+      "items": [
+        {
+          "question": "Chi phí và ổn định khi traffic tăng?",
+          "suggestion": "Rate limit + cache + queue + fallback model; theo dõi token cost và bảo vệ PII.",
+          "answer": "Với API LLM, cần quản trị theo cả TPS lẫn token/chi phí: áp rate limit theo user/tier, cache semantic cho câu hỏi lặp và rút gọn prompt context. Khi quá tải hoặc gần quota, xếp hàng request và fallback sang model rẻ hơn/chất lượng thấp hơn cho use case không critical. Trade-off: fallback/caching có thể giảm chất lượng một phần nhưng giữ được SLA và ngân sách. Dữ liệu nhạy cảm phải được redaction, không log raw prompt chứa PII."
+        }
+      ]
+    },
+    {
+      "title": "Rate limit từ phía client & abuse",
+      "items": [
+        {
+          "question": "Chống brute-force và spam API?",
+          "suggestion": "Kết hợp rate limit nhiều lớp, CAPTCHA theo ngữ cảnh, WAF và phát hiện bất thường.",
+          "answer": "Không nên chỉ chặn theo IP vì attacker có thể xoay proxy; cần rate limit đa chiều (IP, account, device fingerprint, endpoint). Với luồng đăng nhập, áp CAPTCHA hoặc step-up auth sau số lần fail để cân bằng UX và bảo mật. WAF xử lý pattern phổ biến, còn hệ thống nội bộ theo dõi anomaly để tự động khóa mềm hoặc tăng friction. Trade-off: siết quá mạnh giảm abuse nhưng tăng false-positive cho người dùng thật."
+        }
+      ]
+    },
+    {
+      "title": "Sao lưu & disaster recovery (POS production)",
+      "items": [
+        {
+          "question": "Backup Postgres, restore thử?",
+          "suggestion": "Định nghĩa RPO/RTO trước, kết hợp backup full + WAL, và drill restore định kỳ.",
+          "answer": "Chiến lược backup phải bắt đầu từ mục tiêu kinh doanh: RPO bao nhiêu phút và RTO bao nhiêu giờ. Với Postgres production, thường kết hợp base backup định kỳ + WAL archiving để point-in-time recovery. Quan trọng nhất là diễn tập restore tự động trên môi trường tách biệt và đo thời gian thực tế, vì 'backup có' chưa đồng nghĩa 'khôi phục được'. Trade-off: RPO thấp cần lưu WAL dày và tốn storage/network hơn."
+        }
+      ]
+    },
+    {
+      "title": "Phiên bản API và mobile/web đồng thời",
+      "items": [
+        {
+          "question": "Client cũ vẫn chạy khi backend đổi contract?",
+          "suggestion": "Ưu tiên backward-compatible change, versioning rõ, deprecation theo lộ trình.",
+          "answer": "Nguyên tắc là additive-first: thêm field optional, không đổi nghĩa field cũ đột ngột. Dùng versioning (URL/header) cho thay đổi breaking và công bố deprecation window rõ để mobile/web có thời gian nâng cấp. Contract test consumer-driven giúp bắt sớm thay đổi phá vỡ client. Trade-off: duy trì nhiều version làm tăng chi phí vận hành, nhưng giảm rủi ro outage diện rộng."
+        },
+        {
+          "question": "(Bài toán ngoài dự án) **Mobile cũ** không gửi field mới — backend thêm field bắt buộc?",
+          "suggestion": "Rollout theo pha: optional + default server-side trước, rồi mới siết required.",
+          "answer": "Không nên chuyển sang required ngay vì client cũ chưa phát hành kịp. Quy trình an toàn: giai đoạn 1 nhận thiếu field và gán default hợp lệ; giai đoạn 2 cảnh báo/telemetry theo app version; giai đoạn 3 mới chặn version quá cũ. Trade-off: giữ tương thích ngược làm backend phức tạp hơn tạm thời, nhưng tránh gãy flow cho user đang dùng app cũ."
+        }
+      ]
+    },
+    {
+      "title": "Flash sale / spike traffic (bổ sung ngoài dự án)",
+      "items": [
+        {
+          "question": "Thiết kế flash sale 10k order/giây — tránh oversell và sập DB?",
+          "suggestion": "Dùng waiting-room + queue + atomic reserve ở Redis/DB, idempotency và reconcile nền.",
+          "answer": "Ở flash sale, ưu tiên kiểm soát vào cổng trước: waiting room/token bucket để làm phẳng spike, sau đó enqueue order request thay vì đập trực tiếp DB. Reserve tồn kho cần atomic (Redis Lua/DB conditional update), còn DB vẫn là source of truth để reconcile cuối cùng. Mỗi request phải có idempotency key để retry an toàn, kèm rate limit chống bot và mua lặp. Trade-off: kiến trúc nhiều tầng tăng độ trễ vài giây nhưng đổi lại giữ hệ thống sống và hạn chế oversell."
+        },
+        {
+          "question": "(Ngoài dự án) Sàn vé concert — chống bot và giữ công bằng?",
+          "suggestion": "Virtual queue + anti-bot đa lớp + quy tắc công bằng minh bạch.",
+          "answer": "Muốn công bằng phải tách 'xếp hàng' khỏi 'mua vé': virtual queue cấp slot theo thuật toán rõ ràng, tránh ai refresh nhanh thì thắng. Anti-bot nên đa lớp: device fingerprint, reputation, CAPTCHA thích ứng và giới hạn số vé/account/payment method. Trade-off: anti-bot càng mạnh càng có nguy cơ chặn nhầm người thật, nên cần quy trình khiếu nại và dashboard theo dõi false-positive. Audit log đầy đủ giúp xử lý tranh chấp sau sự kiện."
+        }
+      ]
+    },
+    {
+      "title": "Đặt chỗ / double-booking (bổ sung ngoài dự án)",
+      "items": [
+        {
+          "question": "Hệ thống đặt phòng khách sạn — hai người cùng đặt phòng cuối?",
+          "suggestion": "Chặn overlap bằng constraint/lock theo room+date, kết hợp hold tạm thời có TTL.",
+          "answer": "Với booking theo khoảng ngày, unique đơn giản không đủ vì có overlap; Postgres có thể dùng exclusion constraint để chặn trùng range ở mức DB. Ở lớp ứng dụng, có thể tạo hold tạm thời (TTL) khi user thanh toán để giảm tranh chấp thời gian ngắn. Trade-off: lock mạnh tăng tính đúng nhưng giảm throughput; hold TTL tăng UX nhưng cần dọn hold hết hạn chính xác để không giữ phòng 'ma'. Nên để DB là lớp bảo vệ cuối cùng chống double-booking."
+        },
+        {
+          "question": "(Ngoài dự án) Giữ chỗ 15 phút — hết hạn trả slot?",
+          "suggestion": "Dùng hold có TTL + cơ chế release tự động + đối soát với trạng thái thanh toán.",
+          "answer": "Khi giữ chỗ 15 phút, trạng thái hold nên lưu ở Redis/DB với expiration rõ ràng và job quét bù để tránh lệch do clock/skipped event. Thanh toán thành công phải atomically chuyển từ `HELD` sang `CONFIRMED`; hết hạn thì release slot tự động. Trade-off: rely thuần Redis TTL nhanh nhưng có rủi ro event mất; thêm reconciliation định kỳ giúp tăng độ tin cậy."
+        }
+      ]
+    },
+    {
+      "title": "Multi-tenant SaaS (lý thuyết nghiệp vụ)",
+      "items": [
+        {
+          "question": "Schema per tenant vs shared table + `tenant_id` — trade-off?",
+          "suggestion": "Shared-table rẻ và dễ scale; schema/DB riêng cô lập tốt hơn nhưng vận hành nặng.",
+          "answer": "Shared table + `tenant_id` tối ưu chi phí và triển khai nhanh, phù hợp số tenant lớn nhưng phải kiểm soát rò dữ liệu rất chặt (RLS/filter bắt buộc). Schema-per-tenant tăng cô lập và tùy biến tốt hơn, đổi lại migration và quan sát vận hành phức tạp theo số lượng schema. DB-per-tenant cho enterprise compliance mạnh nhất nhưng tốn tài nguyên và automation nhiều nhất. Quyết định nên dựa trên yêu cầu compliance, mức tùy biến tenant, và năng lực platform team."
+        },
+        {
+          "question": "(Ngoài dự án) Rò tenant — test regression phải cover gì?",
+          "suggestion": "Cover test ở mức query/API cho mọi đường đọc-ghi có ràng buộc tenant.",
+          "answer": "Regression suite cần kiểm tra cả read path lẫn write path: user tenant A không thấy/sửa được dữ liệu tenant B ở mọi endpoint quan trọng. Nên có test âm tính cho ORM join/eager-load vì đây là nơi hay rò filter. Bổ sung static guardrail (query interceptor/lint rule) để fail sớm khi thiếu điều kiện tenant. Trade-off: test integration chậm hơn unit test nhưng bắt lỗi bảo mật đúng lớp."
+        }
+      ]
+    },
+    {
+      "title": "Nhật ký kiểm toán & pháp lý (ERP / kế toán)",
+      "items": [
+        {
+          "question": "Bút toán đã **khóa kỳ** — sửa sai thế nào không phá audit trail?",
+          "suggestion": "Không sửa đè dữ liệu đã khóa kỳ; dùng bút toán đảo/điều chỉnh có phê duyệt.",
+          "answer": "Khi kỳ kế toán đã khóa, nguyên tắc là không update trực tiếp chứng từ cũ. Sửa sai bằng bút toán đảo hoặc bút toán điều chỉnh ở kỳ mở, kèm lý do, người duyệt và timestamp để giữ audit trail bất biến. Trade-off: báo cáo lịch sử có thêm bút toán điều chỉnh nên khó đọc hơn chút, nhưng đảm bảo tuân thủ và truy vết pháp lý. Cần quyền hạn chặt cho thao tác mở/đóng kỳ."
+        },
+        {
+          "question": "(Ngoài dự án) GDPR/xóa dữ liệu cá nhân vs bắt buộc lưu hóa đơn?",
+          "suggestion": "Tách dữ liệu định danh khỏi chứng từ; ưu tiên ẩn danh/pseudonymize theo retention policy.",
+          "answer": "Nhiều quốc gia yêu cầu lưu hóa đơn trong thời hạn pháp lý, nên không phải lúc nào cũng được xóa cứng toàn bộ bản ghi. Cách cân bằng là tách PII khỏi dữ liệu kế toán và thực hiện pseudonymization/anonymization khi có yêu cầu xóa. Trade-off: kiến trúc dữ liệu phức tạp hơn nhưng giảm rủi ro vi phạm quyền riêng tư và vẫn đáp ứng nghĩa vụ lưu trữ. Quyết định cuối cần thống nhất với legal/compliance theo từng thị trường."
+        }
+      ]
+    },
+    {
+      "title": "Đồng bộ kho khi có WMS / nhiều kho (liên quan ERP)",
+      "items": [
+        {
+          "question": "Tồn kho hiển thị trên web lệch với kho thực — eventual consistency?",
+          "suggestion": "Chấp nhận eventual consistency có kiểm soát: event-driven + reserved stock + reconcile.",
+          "answer": "Tồn kho online nên tính theo `available = on_hand - reserved` để phản ánh hàng đã giữ chỗ nhưng chưa xuất kho. Mọi biến động nhập/xuất đi qua event log, rồi các service tiêu thụ bất đồng bộ để cập nhật cache/read model. Trade-off: có độ trễ ngắn nên UI cần hiển thị trạng thái 'đang cập nhật' ở thời điểm cao điểm. Reconciliation định kỳ là bắt buộc để kéo sai lệch về 0."
+        },
+        {
+          "question": "(Ngoài dự án) Marketplace — seller tự cập nhật tồn, platform aggregate?",
+          "suggestion": "Ingest update theo event/API idempotent, có SLA freshness và cảnh báo sai lệch.",
+          "answer": "Marketplace nên định nghĩa hợp đồng đồng bộ rõ: push event, pull fallback, và idempotent key cho từng lần cập nhật SKU. Vì seller không đồng nhất chất lượng hệ thống, cần SLA freshness theo nhóm seller và cơ chế degrade (ẩn sản phẩm/giảm ưu tiên) khi stale quá lâu. Trade-off: strict SLA tăng chất lượng tồn kho nhưng có thể giảm số lượng listing hiển thị. Cần dashboard đối soát theo seller để vận hành chủ động."
+        }
+      ]
+    },
+    {
+      "title": "Observability & SRE (nghiệp vụ vận hành)",
+      "items": [
+        {
+          "question": "SLO error budget hết — team làm gì trước khi ship feature mới?",
+          "suggestion": "Khi hết error budget: ưu tiên reliability, tạm dừng feature rủi ro cao.",
+          "answer": "Theo thực hành SRE, khi burn hết error budget thì roadmap nên chuyển trọng tâm sang độ ổn định thay vì thêm tính năng mới. Team cần freeze các thay đổi rủi ro cao, xử lý nguyên nhân chính gây lỗi và chỉ cho phép release có risk thấp/khắc phục sự cố. Trade-off: chậm tiến độ feature ngắn hạn nhưng bảo vệ niềm tin người dùng và giảm nợ vận hành dài hạn. Sau đó cập nhật lại SLO nếu thấy mục tiêu ban đầu không còn phù hợp thực tế."
+        },
+        {
+          "question": "(Ngoài dự án) Incident 3h — communication stakeholder?",
+          "suggestion": "Thiết lập incident commander, cập nhật định kỳ qua status page, nói rõ tác động và workaround.",
+          "answer": "Trong incident kéo dài, ưu tiên là thông tin nhất quán: chỉ định incident commander và một kênh cập nhật chính thức cho khách hàng/stakeholder. Mỗi bản tin nên nêu mức ảnh hưởng, phạm vi, hành động đang làm và thời điểm cập nhật tiếp theo (dù chưa có ETA fix). Trade-off: công bố sớm có thể chưa đủ dữ kiện, nhưng im lặng lâu gây mất niềm tin nặng hơn. Kết thúc sự cố cần RCA blameless và action item có owner/date."
+        }
+      ]
+    },
+    {
+      "title": "Spring Cloud Config & secret rotation (SocialNetwork)",
+      "items": [
+        {
+          "question": "Đổi secret DB/Kafka không restart toàn bộ service?",
+          "suggestion": "External secret store + rotation + reload an toàn; hạn chế restart hàng loạt.",
+          "answer": "Mô hình bền vững là dùng secret manager (Vault/KMS) với cơ chế rotate định kỳ và phân phối secret ngắn hạn. Ứng dụng cần hỗ trợ refresh config từng phần (actuator/bus/reload hook) và quay vòng connection pool theo kiểu graceful để không rớt traffic. Trade-off: dynamic reload giảm downtime nhưng đòi hỏi code và hạ tầng phức tạp hơn so với restart toàn cụm. Bắt buộc đo lường tỷ lệ lỗi trong giai đoạn rotation để rollback nhanh."
+        },
+        {
+          "question": "(Ngoài dự án) Lộ key trên Git — xử lý khẩn cấp?",
+          "suggestion": "Ưu tiên revoke/rotate ngay, rồi mới cleanup repo và điều tra phạm vi lộ lọt.",
+          "answer": "Bước 1 luôn là vô hiệu hóa key/token ngay lập tức và cấp mới; không chờ dọn lịch sử Git. Sau đó purge secret khỏi history, quét lại toàn bộ repo/CI artifacts, và audit log để xác định có bị lạm dụng hay chưa. Trade-off: rotate khẩn có thể gây gián đoạn tạm thời, nhưng chậm rotate mới là rủi ro lớn nhất. Cuối cùng cần postmortem và thêm secret scanning/pre-commit guardrail để ngăn tái diễn."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "id": "7",
+  "title": "JPA / Hibernate & cơ sở dữ liệu",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "EntityManager, Persistence Context?",
+          "suggestion": "Persistence Context là nơi EntityManager theo dõi entity managed để dirty checking và đồng bộ DB khi flush.",
+          "answer": "EntityManager quản lý một Persistence Context (first-level cache theo phạm vi transaction/request tùy cấu hình). Entity ở trạng thái managed sẽ được theo dõi thay đổi và đồng bộ xuống DB tại thời điểm flush/commit. Khi `detach` hoặc `clear`, entity rời context nên không còn dirty checking; truy cập lazy association ngoài context dễ dẫn tới `LazyInitializationException`."
+        },
+        {
+          "question": "`LAZY` vs `EAGER`?",
+          "suggestion": "Theo JPA spec: `@ManyToOne` mặc định EAGER, `@OneToMany` mặc định LAZY; nên chủ động thiết kế fetch plan theo use case.",
+          "answer": "Mặc định fetch của JPA không luôn tối ưu: `@ManyToOne`/`@OneToOne` là EAGER, còn collection như `@OneToMany` là LAZY theo spec. EAGER dễ kéo theo graph lớn và query phụ ngoài ý muốn; LAZY nếu truy cập sai thời điểm sẽ gây N+1 hoặc lỗi lazy ngoài transaction. Cách làm senior là giữ mapping thiên LAZY và quyết định dữ liệu cần lấy tại query bằng `join fetch`, `@EntityGraph`, hoặc projection."
+        },
+        {
+          "question": "N+1 query — ví dụ và cách xử?",
+          "suggestion": "N+1 xảy ra khi đọc danh sách cha rồi chạm quan hệ con từng phần tử, phát sinh thêm N truy vấn.",
+          "answer": "Ví dụ: lấy 100 `Order`, sau đó loop đọc `order.getItems()` với quan hệ LAZY; ORM bắn thêm ~100 query cho items. Khắc phục theo use case: `join fetch` khi cần graph đầy đủ, DTO projection khi chỉ cần vài cột, hoặc batch fetching (`@BatchSize`/`default_batch_fetch_size`) để gom nhiều lazy load thành ít query hơn. Nên đo bằng SQL log/metrics thay vì đoán."
+        },
+        {
+          "question": "`@Transactional(readOnly = true)` lợi ích?",
+          "suggestion": "`readOnly=true` chủ yếu là hint: giảm dirty-check/flush overhead và có thể set connection read-only.",
+          "answer": "Trong Spring, `@Transactional(readOnly = true)` không biến mọi thứ thành “không thể ghi” tuyệt đối ở mọi DB, nhưng nó gửi tín hiệu tối ưu cho transaction manager/ORM. Với Hibernate, read-only transaction thường giảm công việc flush/dirty checking; JDBC connection cũng có thể được đặt cờ read-only tùy driver. Vì vậy lợi ích là hiệu năng và an toàn vận hành, nhưng không nên xem đây là cơ chế bảo mật thay thế quyền ghi ở DB."
+        },
+        {
+          "question": "Optimistic lock `@Version`?",
+          "suggestion": "`@Version` dùng kiểm soát cạnh tranh lạc quan: update kèm version, lệch version thì fail.",
+          "answer": "Optimistic locking thêm điều kiện version vào câu lệnh update/delete. Nếu bản ghi đã bị transaction khác sửa trước đó, số dòng ảnh hưởng bằng 0 và JPA ném `OptimisticLockException`. Cách này phù hợp hệ đọc nhiều-ghi ít; ứng dụng cần chiến lược xử lý conflict rõ ràng (retry có giới hạn hoặc trả lỗi business cho người dùng)."
+        },
+        {
+          "question": "Index DB — khi nào hiệu quả / vô hiệu?",
+          "suggestion": "Index hiệu quả khi truy vấn có chọn lọc; composite index phải theo thứ tự điều kiện lọc/sắp xếp thực tế.",
+          "answer": "Index cải thiện tốc độ đọc nhưng tăng chi phí ghi (INSERT/UPDATE/DELETE) và tốn storage. Composite index chỉ phát huy khi truy vấn dùng prefix cột đúng thứ tự thiết kế; vì vậy cần xuất phát từ workload thật và `EXPLAIN ANALYZE`. Cột cardinality thấp hoặc biến động liên tục thường lợi ích kém, trừ khi kết hợp với cột khác để tăng tính chọn lọc."
+        },
+        {
+          "question": "Transaction ACID — isolation anomaly?",
+          "suggestion": "ACID nói về tính đúng đắn giao dịch; isolation level quyết định chấp nhận anomaly nào.",
+          "answer": "Các anomaly kinh điển gồm dirty read, non-repeatable read, phantom read. PostgreSQL mặc định `READ COMMITTED`; theo tài liệu PostgreSQL, mức `REPEATABLE READ` dựa trên snapshot và chặn cả phantom read (chặt hơn mức tối thiểu của chuẩn SQL), còn `SERIALIZABLE` thêm bảo đảm tương đương chạy tuần tự nhưng có thể phát sinh serialization failure cần retry."
+        },
+        {
+          "question": "`EXPLAIN` / query plan — em đọc thế nào?",
+          "suggestion": "Đọc plan theo 3 điểm: đường đi truy cập dữ liệu, ước lượng rows/cost, và node tốn thời gian nhất.",
+          "answer": "Khi đọc `EXPLAIN (ANALYZE)`, cần so sánh estimate với actual để phát hiện thống kê lệch. Nếu thấy seq scan trên bảng lớn cho điều kiện chọn lọc cao, xem lại index hoặc tính chọn lọc thực. Ngoài index, tối ưu còn đến từ rewrite query, giảm sort/hash không cần thiết, và cập nhật statistics (`ANALYZE`) định kỳ."
+        },
+        {
+          "question": "`CascadeType` — REMOVE vs orphanRemoval?",
+          "suggestion": "REMOVE cascade khi xóa cha; `orphanRemoval=true` còn xóa con khi bị tách khỏi quan hệ cha.",
+          "answer": "`CascadeType.REMOVE` chỉ lan truyền thao tác remove từ parent sang child tại thời điểm xóa parent. `orphanRemoval = true` xử lý trường hợp child không còn thuộc parent (ví dụ bị remove khỏi collection) và sẽ bị delete khi flush. Cơ chế này rất hợp cho aggregate ownership rõ ràng, nhưng nguy hiểm nếu quan hệ chia sẻ hoặc thao tác collection không được kiểm soát."
+        },
+        {
+          "question": "`@Embedded` / `@Embeddable` — khi nào dùng?",
+          "suggestion": "Dùng `@Embeddable` cho value object không có identity riêng, lưu chung bảng của entity sở hữu.",
+          "answer": "`@Embedded`/`@Embeddable` phù hợp cho value object như địa chỉ, khoảng thời gian, money tuple khi vòng đời gắn chặt với entity cha. Cách này giữ mô hình domain rõ hơn so với nhét nhiều cột rời rạc trong entity. Khi dùng nhiều lần trong cùng entity, cần `@AttributeOverride` để tránh trùng tên cột."
+        },
+        {
+          "question": "Second-level cache (Hibernate) — entity nào nên cache?",
+          "suggestion": "Chỉ cache entity đọc nhiều, ít thay đổi, truy cập lặp lại; chọn đúng strategy (`READ_ONLY`, `READ_WRITE`, ...).",
+          "answer": "Second-level cache hữu ích cho dữ liệu tham chiếu ổn định (catalog, dictionary) hoặc hotspot đọc lặp lại. Với dữ liệu cập nhật thường xuyên, chi phí invalidation/đồng bộ có thể lớn hơn lợi ích và dễ tạo dữ liệu stale nếu cấu hình sai. Cần theo dõi hit ratio, eviction và memory footprint trước khi mở rộng phạm vi cache."
+        },
+        {
+          "question": "Pessimistic lock `PESSIMISTIC_WRITE` — trade-off?",
+          "suggestion": "`PESSIMISTIC_WRITE` khóa bản ghi sớm để ngăn ghi đồng thời, đổi lại tăng chờ lock/deadlock.",
+          "answer": "Pessimistic lock phù hợp khi xung đột ghi cao và không chấp nhận retry thất bại như optimistic lock. Nó giảm lost update bằng cách khóa row tại DB, nhưng làm throughput giảm do block và có nguy cơ deadlock nếu thứ tự lock không nhất quán. Triển khai thực tế cần timeout, thứ tự truy cập ổn định và giao dịch ngắn."
+        },
+        {
+          "question": "Postgres vs MSSQL — khác biệt em từng để ý khi làm song song?",
+          "suggestion": "Khác biệt lớn nằm ở dialect SQL, hành vi locking/isolation, kiểu dữ liệu và function built-in.",
+          "answer": "PostgreSQL nổi bật với MVCC, JSONB, `RETURNING`, cú pháp chuẩn SQL tương đối mạnh; MSSQL có hệ sinh thái T-SQL riêng, optimizer/hint và function khác biệt. Khi chạy song song hai hệ, lỗi thường nằm ở pagination syntax, xử lý datetime/timezone, collation và behavior transaction. Vì vậy cần bộ test SQL integration riêng cho từng dialect thay vì kỳ vọng ORM che toàn bộ khác biệt."
+        }
+      ]
+    }
+  ]
+}

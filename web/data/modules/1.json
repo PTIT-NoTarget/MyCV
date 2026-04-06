@@ -1,0 +1,151 @@
+{
+  "id": "1",
+  "title": "Java — nền tảng & ngôn ngữ",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "JDK, JRE, JVM khác nhau thế nào?",
+          "suggestion": "- Phân biệt theo mục đích: chạy (`JRE`) vs phát triển (`JDK`).\n- Nêu vai trò lõi của `JVM` (thực thi bytecode, GC, JIT).\n- Liên hệ thực tế Java 11+: thường cài thẳng `JDK` để vừa build vừa chạy.",
+          "answer": "- `JVM` là máy ảo thực thi bytecode `.class`, quản lý bộ nhớ, GC, JIT và đảm bảo tính portable giữa OS/CPU.\n- `JRE` là môi trường chạy: gồm `JVM` + thư viện chuẩn để runtime, nhưng không đầy đủ tool dev như `javac`.\n- `JDK` bao gồm mọi thứ của runtime và bộ công cụ phát triển (`javac`, `jcmd`, `jstack`, `jlink`...).\n- Thực tế hiện nay (Java 17/21), nhiều đội chỉ phân phối/cài `JDK`; khái niệm `JRE` vẫn đúng về mặt thành phần nhưng ít được phát hành riêng như trước."
+        },
+        {
+          "question": "`javac` compile ra gì? Bytecode là gì?",
+          "suggestion": "- `javac` tạo file `.class` chứa bytecode, không phải native code.\n- JVM sẽ verify rồi thông dịch/JIT tại runtime.\n- Nhấn mạnh lợi ích: \"compile once, run anywhere\" ở mức JVM.",
+          "answer": "- `javac` dịch `.java` thành bytecode trong `.class` theo JVM specification.\n- Khi chạy, class loader nạp class, verifier kiểm tra an toàn kiểu/bảo mật trước khi thực thi.\n- HotSpot ban đầu có thể interpret, sau đó JIT compile các đoạn nóng sang native để tăng hiệu năng.\n- Trade-off: startup có thể chậm hơn native binary, nhưng sau warm-up throughput thường tốt và tối ưu theo workload thực."
+        },
+        {
+          "question": "`public static void main(String[] args)` — giải thích từng từ khóa.",
+          "suggestion": "- Giải thích từng từ khóa theo vai trò entry point.\n- Nêu thêm vì sao `static` là bắt buộc.\n- Cho ví dụ `args` nhận tham số CLI.",
+          "answer": "- `public`: JVM phải truy cập được method từ bên ngoài class.\n- `static`: gọi được mà không cần tạo object của class chính.\n- `void`: điểm vào chương trình không trả giá trị cho JVM theo kiểu hàm thông thường.\n- `String[] args`: chứa tham số dòng lệnh, ví dụ `java App --port=8080` thì `args` nhận các token tương ứng."
+        },
+        {
+          "question": "`==` và `equals()` khác nhau thế nào?",
+          "suggestion": "- `==` so sánh cùng tham chiếu hay không.\n- `equals()` so sánh logic giá trị nếu class override.\n- Nhắc bẫy phổ biến với `String` và wrapper.",
+          "answer": "- Với object, `==` kiểm tra hai biến có trỏ cùng instance hay không.\n- `equals()` mặc định từ `Object` cũng là so sánh tham chiếu, nhưng nhiều class (như `String`) override để so sánh giá trị.\n- Ví dụ `new String(\"a\") == new String(\"a\")` là `false`, nhưng `equals()` là `true`.\n- Trade-off: dùng `equals` đúng ngữ nghĩa domain, còn `==` phù hợp cho enum/singleton hoặc kiểm tra identity."
+        },
+        {
+          "question": "Hợp đồng `equals()` và `hashCode()`? Vi phạm thì HashMap sao?",
+          "suggestion": "- Nêu đúng contract một chiều: `equals` bằng nhau thì `hashCode` phải bằng nhau.\n- Trình bày hậu quả trực tiếp trên `HashMap`/`HashSet`.\n- Có ví dụ key tìm không ra do override thiếu.",
+          "answer": "- Contract bắt buộc: nếu `a.equals(b)` là `true` thì `a.hashCode()` phải bằng `b.hashCode()`.\n- Chiều ngược lại không bắt buộc, nhưng hash phân tán kém sẽ tăng collision và giảm hiệu năng.\n- Nếu override `equals()` mà quên `hashCode()`, object \"bằng nhau\" có thể rơi vào bucket khác nhau nên `get()`/`contains()` cho kết quả sai.\n- Thực tế nên dùng field bất biến để tính hash nhằm tránh lỗi khi object thay đổi trạng thái."
+        },
+        {
+          "question": "`String` immutable — tại sao và lợi ích?",
+          "suggestion": "- Nêu nguyên nhân: bảo mật, cache, string pool, thread-safety.\n- Nhấn mạnh trade-off: tạo object mới khi \"sửa\" chuỗi.\n- Gợi ý dùng `StringBuilder` khi nối nhiều lần.",
+          "answer": "- `String` immutable nên giá trị không đổi sau khi tạo, giúp an toàn khi chia sẻ giữa nhiều thread.\n- Nhờ bất biến, `String` dùng làm key map ổn định hơn và phù hợp cho intern/string pool.\n- Mặt bảo mật: nhiều API cũ dựa vào bất biến để tránh bị sửa dữ liệu đầu vào sau khi kiểm tra.\n- Trade-off là thao tác nối nhiều lần tạo nhiều object trung gian; khi đó `StringBuilder` thường hiệu quả hơn."
+        },
+        {
+          "question": "String pool là gì?",
+          "suggestion": "- String pool lưu/chuẩn hóa literal và chuỗi `intern()`.\n- Lợi ích chính: tiết kiệm bộ nhớ, giảm duplicate.\n- Cảnh báo: không dùng `==` để so sánh nội dung.",
+          "answer": "- String literal cùng nội dung thường dùng chung một instance trong pool.\n- `intern()` có thể đưa chuỗi động vào cơ chế canonical hóa này.\n- Điều đó giúp tiết kiệm bộ nhớ khi nhiều chuỗi trùng lặp, đặc biệt metadata/từ điển.\n- Nhưng về mặt coding convention, vẫn nên dùng `equals()` để so sánh nội dung nhằm tránh phụ thuộc chi tiết triển khai."
+        },
+        {
+          "question": "`String`, `StringBuilder`, `StringBuffer` khi nào dùng?",
+          "suggestion": "- `String` cho dữ liệu bất biến, ít thao tác nối.\n- `StringBuilder` cho nối chuỗi cục bộ, hiệu năng tốt.\n- `StringBuffer` chỉ khi cần đồng bộ thật sự giữa nhiều thread.",
+          "answer": "- `String` phù hợp khi giá trị ổn định và đọc nhiều.\n- `StringBuilder` không synchronized nên nhanh hơn trong hầu hết code ứng dụng (single-thread theo ngữ cảnh).\n- `StringBuffer` có synchronized từng method, an toàn hơn nhưng tốn overhead lock.\n- Ví dụ build JSON lớn trong loop nên dùng `StringBuilder`; còn chia sẻ buffer giữa nhiều thread thì cân nhắc `StringBuffer` hoặc thiết kế tránh chia sẻ."
+        },
+        {
+          "question": "`final` cho class, method, biến nghĩa là gì?",
+          "suggestion": "- `final class`: chặn kế thừa.\n- `final method`: chặn override.\n- `final` biến: không đổi reference (không đồng nghĩa immutable object).",
+          "answer": "- `final` trên class dùng để khóa thiết kế API, ví dụ `String`.\n- `final` trên method đảm bảo hành vi không bị lớp con thay đổi.\n- `final` trên biến nghĩa là chỉ gán một lần; nếu object mutable thì nội dung bên trong vẫn có thể đổi.\n- Trong JMM, `final field` còn có lợi về an toàn công bố (safe publication) khi object được xây dựng đúng cách."
+        },
+        {
+          "question": "Abstract class vs interface (Java 8+)?",
+          "suggestion": "- So sánh theo khả năng chứa state/lifecycle.\n- Interface phù hợp capability và đa kế thừa kiểu.\n- Abstract class phù hợp chia sẻ code + invariants chung.",
+          "answer": "- Abstract class có constructor, field instance, method thường/abstract; phù hợp khi các lớp con chia sẻ state và logic lõi.\n- Interface mô tả hợp đồng; từ Java 8 có `default/static` nhưng vẫn nên giữ nhẹ để tránh xung đột thiết kế.\n- Class chỉ kế thừa một abstract class nhưng có thể implement nhiều interface.\n- Trade-off: ưu tiên interface cho API mở rộng; dùng abstract class khi cần kiểm soát vòng đời và tái sử dụng implementation sâu."
+        },
+        {
+          "question": "Overload vs override?",
+          "suggestion": "- Overload quyết định ở compile-time theo chữ ký.\n- Override quyết định ở runtime theo dynamic dispatch.\n- Nêu quy tắc `@Override`, access, exception.",
+          "answer": "- Overload: cùng tên nhưng khác tham số, compiler chọn method dựa trên type tại compile-time.\n- Override: lớp con cung cấp lại implementation cùng chữ ký để runtime dispatch theo object thực tế.\n- Khi override, không được giảm mức truy cập và checked exception phải tương thích.\n- Covariant return cho phép trả về subtype, giúp API fluent rõ ràng hơn."
+        },
+        {
+          "question": "`try-catch-finally` và `try-with-resources`?",
+          "suggestion": "- Ưu tiên `try-with-resources` cho `AutoCloseable`.\n- Nêu lợi ích: đóng tài nguyên tự động, ít leak.\n- Nhắc `finally` vẫn hữu ích cho cleanup khác.",
+          "answer": "- `try-with-resources` tự gọi `close()` theo thứ tự ngược, kể cả khi có exception.\n- Exception khi `close()` sẽ thành suppressed exception, không che mất lỗi chính.\n- `finally` vẫn cần khi cleanup không nằm trong `AutoCloseable` (ví dụ metric, unlock logic đặc thù).\n- Trong code JDBC/IO production, đây là mẫu mặc định để giảm bug tài nguyên."
+        },
+        {
+          "question": "`Error` vs `Exception`? Checked vs unchecked?",
+          "suggestion": "- `Error` là lỗi hệ thống nghiêm trọng, không xử lý nghiệp vụ.\n- `Exception`: checked vs unchecked theo compile-time contract.\n- Giải thích trade-off khi chọn checked/unchecked.",
+          "answer": "- `Error` (ví dụ `OutOfMemoryError`) thường chỉ log/thoát an toàn, không nên bắt để \"cứu\" luồng nghiệp vụ.\n- Checked exception buộc caller xử lý hoặc khai báo, phù hợp lỗi recoverable ở boundary (I/O, tích hợp ngoài).\n- Unchecked (`RuntimeException`) gọn hơn cho lỗi lập trình hoặc invariant bị phá vỡ.\n- Trade-off: quá nhiều checked exception làm API nặng; quá lạm dụng unchecked dễ thiếu ngữ cảnh nếu không chuẩn hóa logging/mapping lỗi."
+        },
+        {
+          "question": "Generics — type erasure là gì?",
+          "suggestion": "- Type erasure: generic chủ yếu tồn tại ở compile-time.\n- Nêu hệ quả runtime: không giữ đầy đủ kiểu `T`.\n- Cho ví dụ hạn chế (`new T()`, `instanceof List<String>`).",
+          "answer": "- Compiler dùng generics để kiểm tra type-safety rồi xóa thông tin tham số kiểu trong bytecode theo cơ chế erasure.\n- Vì vậy runtime không phân biệt `List<String>` và `List<Integer>` như hai class khác nhau.\n- Hạn chế phổ biến: không tạo trực tiếp `new T()`, không `instanceof` với kiểu generic cụ thể.\n- Trade-off: tương thích ngược tốt với Java cũ, đổi lại đôi khi cần `Class<T>` token hoặc annotation để giữ metadata."
+        },
+        {
+          "question": "`List<? extends T>` và `List<? super T>` (PECS)?",
+          "suggestion": "- Nhớ quy tắc PECS: Producer `extends`, Consumer `super`.\n- `extends` ưu tiên đọc, `super` ưu tiên ghi.\n- Minh họa bằng API `copy`/`addAll`.",
+          "answer": "- `List<? extends T>` an toàn để đọc ra `T` nhưng không an toàn để thêm phần tử mới (trừ `null`).\n- `List<? super T>` an toàn để ghi `T`, nhưng khi đọc chỉ chắc chắn là `Object`.\n- Ví dụ method copy thường nhận `src: ? extends T` và `dst: ? super T` để linh hoạt tối đa.\n- Dùng wildcard đúng giúp API thư viện mở rộng mà vẫn giữ type-safety tại compile-time."
+        },
+        {
+          "question": "Enum an toàn thread và singleton?",
+          "suggestion": "- Enum singleton ngắn gọn và an toàn khởi tạo.\n- Chống nhiều bẫy của singleton thủ công (reflection/serialization).\n- Nêu giới hạn: khó lazy theo tham số runtime.",
+          "answer": "- Enum được JVM đảm bảo khởi tạo đúng một lần theo class initialization semantics.\n- Cách này tự nhiên an toàn với serialization và khó bị phá bởi reflection hơn singleton thường.\n- So với double-checked locking, code đơn giản và ít lỗi concurrency hơn.\n- Trade-off: ít linh hoạt nếu cần vòng đời phức tạp hoặc phụ thuộc cấu hình thay đổi lúc runtime."
+        },
+        {
+          "question": "Serialization trong Java — `serialVersionUID`, `transient`?",
+          "suggestion": "- `serialVersionUID` kiểm soát tương thích phiên bản object stream.\n- `transient` loại field khỏi serialize.\n- Nhắc best practice hiện đại: hạn chế Java native serialization.",
+          "answer": "- `serialVersionUID` giúp JVM biết class version có tương thích khi deserialize hay không.\n- Nếu schema thay đổi không tương thích mà UID lệch, thường gặp `InvalidClassException`.\n- `transient` dùng cho dữ liệu nhạy cảm hoặc dữ liệu có thể tái tạo (cache tạm).\n- Trong hệ thống phân tán hiện đại, thường ưu JSON/Protobuf/Avro vì rõ schema, dễ kiểm soát bảo mật và tương thích hơn."
+        },
+        {
+          "question": "`Comparable` vs `Comparator`?",
+          "suggestion": "- `Comparable` = natural order gắn trong class.\n- `Comparator` = thứ tự ngoài, tái sử dụng theo ngữ cảnh.\n- Nêu tính nhất quán với `equals` khi dùng sorted set/map.",
+          "answer": "- `Comparable` phù hợp khi domain có một thứ tự mặc định rõ ràng, ví dụ ngày tháng.\n- `Comparator` linh hoạt hơn: có thể sort theo nhiều tiêu chí (tên, tuổi, điểm...) mà không sửa class gốc.\n- Với `TreeSet`/`TreeMap`, thứ tự comparator quyết định tính duy nhất theo so sánh, nên cần cẩn thận với `equals`.\n- Java 8+ có `Comparator.comparing(...).thenComparing(...)` giúp viết ngắn và rõ hơn."
+        },
+        {
+          "question": "Stream API — `map` vs `flatMap`, `reduce`, lazy?",
+          "suggestion": "- `map` biến đổi 1-1, `flatMap` làm phẳng cấu trúc lồng.\n- `reduce` gộp về một giá trị, chú ý identity/associativity.\n- Nhấn mạnh stream pipeline lazy tới terminal operation.",
+          "answer": "- `map` áp dụng hàm biến đổi từng phần tử; `flatMap` dùng khi mỗi phần tử tạo ra nhiều phần tử con.\n- `reduce` phù hợp phép kết hợp có tính kết hợp (associative), đặc biệt quan trọng khi dùng parallel stream.\n- Các intermediate operation (`filter`, `map`) đều lazy, chỉ chạy khi có terminal operation (`collect`, `count`, `findFirst`).\n- Trade-off: stream giúp code khai báo rõ hơn, nhưng với hot path đơn giản thì loop truyền thống đôi khi dễ tối ưu/đọc hơn."
+        },
+        {
+          "question": "Optional — dùng đúng/không nên lạm dụng thế nào?",
+          "suggestion": "- Dùng `Optional` chủ yếu ở kiểu trả về.\n- Tránh dùng làm field/entity/DTO serialization.\n- Phân biệt `orElse` vs `orElseGet` về chi phí tạo giá trị mặc định.",
+          "answer": "- `Optional` diễn đạt rõ \"có thể không có giá trị\" ở API return, giảm null-check rải rác.\n- Tránh lạm dụng trong field hoặc tham số method vì tăng độ phức tạp mapping/serialization.\n- `orElse(...)` luôn evaluate tham số; `orElseGet(...)` chỉ chạy khi rỗng, tốt hơn khi fallback đắt.\n- Không gọi `get()` mù; ưu `map/flatMap/filter/orElseThrow` để luồng xử lý rõ ràng."
+        },
+        {
+          "question": "**Record** (Java 16+) khác class thường thế nào?",
+          "suggestion": "- Record là kiểu dữ liệu bất biến, boilerplate thấp.\n- Tự sinh constructor/accessor/`equals`/`hashCode`/`toString`.\n- Phù hợp DTO; cân nhắc với framework cần proxy/mutable state.",
+          "answer": "- `record` (ổn định từ Java 16) là data carrier: mỗi component thành field `private final` và accessor tương ứng.\n- Compiler tự sinh các method chuẩn nên giảm đáng kể code lặp.\n- Có thể dùng compact constructor để validate invariant ngay lúc tạo object.\n- Trade-off: không hợp các mô hình cần mutable lifecycle phức tạp (nhiều entity ORM truyền thống)."
+        },
+        {
+          "question": "**Sealed class/interface** — mục đích?",
+          "suggestion": "- Sealed giới hạn tập lớp con hợp lệ bằng `permits`.\n- Tăng kiểm soát domain model và API evolution.\n- Kết hợp tốt với pattern matching/switch exhaustive.",
+          "answer": "- `sealed` giúp đóng tập subtype tại compile-time, tránh class ngoài ý muốn kế thừa.\n- Các subclass phải khai báo `final`, `sealed` hoặc `non-sealed` rõ ràng.\n- Nhờ tập subtype hữu hạn, compiler hỗ trợ kiểm tra đầy đủ nhánh trong `switch`/pattern matching.\n- Trade-off: tăng tính an toàn mô hình, nhưng giảm độ mở extension từ bên thứ ba."
+        },
+        {
+          "question": "Pattern matching cho `switch` (Java 17+) — lợi ích?",
+          "suggestion": "- Dùng type pattern để thay chuỗi `instanceof` + cast.\n- Guard (`when`) giúp điều kiện nhánh rõ ràng.\n- Nêu lợi ích compile-time exhaustiveness với sealed types.",
+          "answer": "- Pattern matching cho `switch` giúp viết logic phân nhánh theo kiểu dữ liệu ngắn gọn hơn.\n- Compiler kiểm tra tính đầy đủ nhánh tốt hơn khi làm việc với sealed hierarchy.\n- Guard (`when`) cho phép thêm điều kiện trực tiếp ở case, giảm nested `if`.\n- Trade-off: cần đội ngũ thống nhất baseline JDK (17/21+) để tận dụng cú pháp mới đồng nhất."
+        },
+        {
+          "question": "**Virtual threads** (Java 21) — khi nào hợp lý so với thread cổ điển?",
+          "suggestion": "- Virtual thread hợp nhất với mô hình thread-per-request cho tác vụ I/O-bound.\n- Không làm CPU task chạy nhanh hơn; chỉ tăng khả năng scale concurrency.\n- Cảnh báo pinning khi block trong `synchronized`/native call.",
+          "answer": "- Virtual threads (Java 21) rất hợp workload I/O-bound có nhiều request chờ mạng/DB.\n- Chúng giúp tăng throughput với code đồng bộ dễ đọc, thay vì callback phức tạp.\n- Với CPU-bound, vẫn nên giới hạn mức song song gần số core; virtual thread không tự tăng tốc tính toán.\n- Theo JEP 444, nếu block lâu trong `synchronized` hoặc native/FFI có thể gây pinning carrier thread, nên đo bằng JFR và tối ưu vùng lock dài."
+        },
+        {
+          "question": "Java **module system** (`module-info.java`) — vì sao Spring Boot vẫn thường “unnamed module”?",
+          "suggestion": "- JPMS tăng encapsulation và kiểm soát dependency ở mức module.\n- Spring Boot thường chạy classpath vì ecosystem/library tương thích đa dạng.\n- Nêu tác động upgrade JDK: strong encapsulation, phản xạ vào internal API.",
+          "answer": "- `module-info.java` cho phép khai báo rõ `requires/exports`, giảm phụ thuộc ẩn.\n- JPMS hữu ích ở ứng dụng/library cần boundary chặt hoặc custom runtime image (`jlink`).\n- Nhiều dự án Boot vẫn dùng unnamed module (classpath) để giảm friction tương thích thư viện.\n- Trade-off: module hóa tăng kỷ luật kiến trúc nhưng tốn công migrate, nhất là khi có reflection/framework động."
+        },
+        {
+          "question": "`ClassLoader` — parent delegation? `NoClassDefFoundError` vs `ClassNotFoundException`?",
+          "suggestion": "- Parent delegation: loader con ưu tiên nhờ loader cha trước.\n- Phân biệt `ClassNotFoundException` và `NoClassDefFoundError` theo ngữ cảnh phát sinh.\n- Cho ví dụ lỗi thiếu dependency khi runtime.",
+          "answer": "- Cơ chế parent delegation giúp tránh nạp trùng class nền tảng và giảm rủi ro xung đột.\n- `ClassNotFoundException` là checked exception, thường gặp khi chủ động load class bằng tên mà không tìm thấy.\n- `NoClassDefFoundError` là `LinkageError`: class từng compile-time có thể tồn tại nhưng runtime không định nghĩa được (thiếu dependency, lỗi static init...).\n- Khi debug production, cần xem classpath/module path và stacktrace nguyên nhân gốc (`ExceptionInInitializerError`, jar thiếu...)."
+        },
+        {
+          "question": "Java Memory Model — **happens-before** liên quan `volatile`, `synchronized`, thread start/join?",
+          "suggestion": "- Nêu 4 quan hệ cốt lõi: `volatile`, monitor unlock/lock, `start`, `join`.\n- Nhấn mạnh `volatile` cho visibility/order, không thay thế atomic RMW.\n- Liên hệ lỗi race condition nếu thiếu happens-before.",
+          "answer": "- Trong JMM, `happens-before` đảm bảo cả thứ tự lẫn khả năng nhìn thấy dữ liệu giữa các thread.\n- Ghi `volatile` happens-before lần đọc `volatile` sau đó; `unlock` monitor happens-before `lock` kế tiếp trên cùng monitor.\n- `Thread.start()` happens-before mọi hành động trong thread mới; các hành động trong thread happens-before thread khác quan sát sau `join()` thành công.\n- Không có quan hệ này thì thread có thể thấy dữ liệu cũ do reorder/cache; vì vậy thiết kế concurrent phải dựa vào primitive đồng bộ rõ ràng."
+        },
+        {
+          "question": "`static` được khởi tạo khi nào? `static block` chạy lúc nào?",
+          "suggestion": "- Class được khởi tạo khi \"actively used\" (new, gọi static method, đọc/ghi static field...).\n- `static field` và `static block` chạy một lần theo thứ tự khai báo.\n- Nêu ngoại lệ: constant `static final` có thể bị inline.",
+          "answer": "- Vòng đời class: load -> link -> initialize; phần `static` chạy ở bước initialize và chỉ một lần cho mỗi class loader.\n- Trigger thường gặp: tạo instance, gọi static method, truy cập static non-constant.\n- `static final` compile-time constant có thể được inline vào nơi dùng nên không luôn kích hoạt initialize class.\n- Trade-off: static initialization tiện cho singleton/config nhẹ, nhưng làm nặng startup nếu đặt logic I/O hoặc side effect lớn."
+        }
+      ]
+    }
+  ]
+}

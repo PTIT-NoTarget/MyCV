@@ -1,0 +1,56 @@
+{
+  "id": "8",
+  "title": "REST API, bảo mật, tích hợp",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Idempotent — method HTTP nào?",
+          "suggestion": "Nhớ nhóm idempotent: GET/PUT/DELETE (thêm HEAD, OPTIONS). POST thường không idempotent; nghiệp vụ thanh toán nên thêm idempotency key.",
+          "answer": "Theo HTTP Semantics (RFC 9110), các method thường idempotent là GET, PUT, DELETE (và HEAD, OPTIONS). Nghĩa là gửi cùng một request nhiều lần thì trạng thái tài nguyên cuối cùng vẫn như nhau. POST mặc định không idempotent vì hay dùng để tạo mới. Trong hệ thống thanh toán/webhook, tôi thêm `Idempotency-Key` và lưu kết quả theo key để request retry không tạo giao dịch trùng."
+        },
+        {
+          "question": "Versioning API?",
+          "suggestion": "Nêu 3 cách: URL, header, query; chốt 1 chuẩn chính để team thống nhất và dễ vận hành.",
+          "answer": "Tôi ưu tiên version trong URL như `/api/v1/...` vì dễ nhìn trong log, route rõ ràng, hỗ trợ cache/proxy tốt. Header version (`Accept` hoặc custom header) giúp URL sạch nhưng khó debug hơn nếu tooling không đồng bộ. Query param phù hợp thử nghiệm ngắn hạn, không nên làm chuẩn lâu dài. Thực tế tôi giữ backward compatibility trong một khoảng thời gian, công bố deprecation date và cung cấp changelog migration."
+        },
+        {
+          "question": "Pagination — offset vs cursor?",
+          "suggestion": "Offset dễ làm cho admin/list nhỏ; cursor tốt cho feed lớn, dữ liệu thay đổi liên tục.",
+          "answer": "Offset pagination (`limit`, `offset`) dễ triển khai và phù hợp màn hình quản trị cần nhảy thẳng trang. Điểm yếu là trang sâu chậm và có thể lệch dữ liệu khi record mới được chèn/xóa trong lúc người dùng đang lật trang. Cursor pagination dùng mốc ổn định (ví dụ `created_at,id`) nên nhất quán hơn cho timeline/feed lớn và hiệu năng tốt hơn ở trang sâu. Khi làm production, tôi trả `nextCursor` thay vì số trang."
+        },
+        {
+          "question": "Rate limiting — triển khai?",
+          "suggestion": "Đặt limit ở gateway + Redis; chọn thuật toán token bucket/sliding window; phản hồi 429 có Retry-After.",
+          "answer": "Tôi đặt rate limit tại API gateway để chặn sớm trước khi vào service. Tùy bài toán, tôi dùng token bucket (mượt cho burst ngắn) hoặc sliding window trong Redis (đếm chính xác theo cửa sổ thời gian). Key thường theo `userId` hoặc `IP + endpoint`. Khi vượt ngưỡng, trả HTTP 429 và thêm `Retry-After` để client tự điều chỉnh retry. Đồng thời theo dõi metric bị chặn để tinh chỉnh ngưỡng theo traffic thực tế."
+        },
+        {
+          "question": "Keycloak tích hợp Spring — luồng chung?",
+          "suggestion": "Tách rõ luồng user login và service-to-service; JWT chứa role/scope, Spring Resource Server xác thực chữ ký + issuer.",
+          "answer": "Với người dùng cuối, tôi dùng OIDC Authorization Code flow để lấy access token. Với service-to-service, dùng Client Credentials flow. Trên Keycloak cần cấu hình realm, client, role/scope mapping vào claim token. Ở Spring Boot, service chạy dạng Resource Server, kiểm tra chữ ký JWT qua JWKS, đồng thời validate `iss`, `aud`, thời hạn token và phân quyền theo role/scope trong claim."
+        },
+        {
+          "question": "REST vs **gRPC** — khi nào chọn gRPC trong microservices?",
+          "suggestion": "gRPC hợp nội bộ cần throughput/streaming; REST hợp public API và tích hợp đa nền tảng.",
+          "answer": "Tôi chọn gRPC cho giao tiếp nội bộ microservices khi cần hiệu năng cao, contract chặt bằng `.proto`, và có nhu cầu streaming hai chiều. gRPC chạy tốt trên HTTP/2 nên giảm overhead với nhiều call nhỏ. Tuy nhiên debug cần tooling chuyên dụng, không thân thiện trình duyệt. REST phù hợp hơn cho public API vì dễ test bằng HTTP tools, hỗ trợ cache/CDN tốt, và đối tác bên ngoài tích hợp nhanh."
+        },
+        {
+          "question": "HTTP/1.1 vs HTTP/2 — ảnh hưởng API?",
+          "suggestion": "Nêu điểm chính của HTTP/2: multiplexing, header compression; giảm latency khi nhiều request nhỏ.",
+          "answer": "HTTP/2 cho phép multiplex nhiều stream trên một kết nối nên giảm hiện tượng nghẽn do mở nhiều connection như HTTP/1.1. Nó còn có nén header (HPACK), hữu ích khi request lặp lại nhiều header giống nhau. Kết quả là API call nhỏ, nhiều tài nguyên sẽ phản hồi mượt hơn. Dù transport tốt hơn, nguyên tắc thiết kế API vẫn giữ nguyên: idempotency, status code rõ ràng, retry an toàn và timeout hợp lý."
+        },
+        {
+          "question": "HMAC signature webhook — replay attack?",
+          "suggestion": "Chữ ký chỉ là một phần; cần thêm timestamp + nonce + cửa sổ thời gian hợp lệ để chặn replay.",
+          "answer": "Khi nhận webhook, tôi tính lại HMAC từ raw payload bằng shared secret và so sánh theo constant-time compare. Để chống replay, request phải mang `timestamp` và `nonce`. Server từ chối nếu timestamp quá cũ (ví dụ >5 phút) và lưu nonce với TTL ngắn để phát hiện gửi lại. Nếu payload đúng chữ ký nhưng nonce đã dùng, tôi vẫn reject vì đó là replay hợp lệ về mặt chữ ký nhưng không hợp lệ về thời điểm."
+        },
+        {
+          "question": "OpenAPI/Swagger — lợi ích cho team Fullstack?",
+          "suggestion": "Xem OpenAPI như hợp đồng API: thống nhất schema, response code, ví dụ; có thể codegen client/server stub.",
+          "answer": "OpenAPI giúp front-end và back-end nói cùng một ngôn ngữ: field nào bắt buộc, kiểu dữ liệu gì, lỗi trả về ra sao. Team có thể sinh client SDK tự động để giảm lỗi map DTO thủ công. Trong CI, tôi thường thêm bước kiểm tra breaking change trên spec để tránh release làm vỡ client cũ. Với dự án fullstack, tài liệu sống này rút ngắn thời gian onboarding và giảm tranh luận về contract."
+        }
+      ]
+    }
+  ]
+}

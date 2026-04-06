@@ -1,0 +1,131 @@
+{
+  "id": "5",
+  "title": "Spring & Spring Boot",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "IoC (Inversion of Control) là gì?",
+          "suggestion": "- Nói ngắn: quyền tạo và wiring object chuyển từ code ứng dụng sang Spring container.\n- Nhấn mạnh lợi ích: giảm coupling, dễ thay thế implementation khi test.",
+          "answer": "- **IoC** là nguyên tắc thiết kế trong đó vòng đời object và dependency graph do container (Spring `ApplicationContext`) quản lý thay vì code tự `new` thủ công.\n- Nhờ đó, class tập trung vào nghiệp vụ, phụ thuộc theo abstraction và có thể đổi implementation qua cấu hình/bean wiring.\n- Trong phỏng vấn, bạn có thể lấy ví dụ thay `PaymentGateway` thật bằng mock/fake bean trong test mà không sửa business code."
+        },
+        {
+          "question": "DI (Dependency Injection) — constructor vs setter vs field?",
+          "suggestion": "- Ưu tiên constructor injection cho dependency bắt buộc.\n- Setter chỉ dùng cho dependency tùy chọn; hạn chế field injection.",
+          "answer": "- **Constructor injection** là lựa chọn mặc định tốt nhất: dependency bắt buộc được khai báo rõ, object immutable hơn và test thuận tiện.\n- **Setter injection** phù hợp dependency optional hoặc cấu hình thay đổi sau khi tạo bean, nhưng dễ tạo trạng thái chưa hoàn chỉnh nếu dùng thiếu cẩn trọng.\n- **Field injection** ngắn gọn nhưng ẩn dependency và khó unit test thuần, nên thường không khuyến nghị trong codebase cần maintain lâu dài.\n- Với Spring hiện đại, class có một constructor thì không cần ghi `@Autowired` vẫn được inject."
+        },
+        {
+          "question": "`@Component`, `@Service`, `@Repository`, `@Controller` khác nhau?",
+          "suggestion": "- Đều là stereotype bean, khác chủ yếu ở ngữ nghĩa và một số hành vi framework.\n- Trả lời thêm điểm đặc biệt của `@Repository` và `@RestController`.",
+          "answer": "- Cả bốn annotation đều giúp Spring phát hiện bean qua component scanning.\n- `@Service` diễn tả tầng nghiệp vụ; `@Controller` dành cho MVC, còn `@RestController` = `@Controller` + `@ResponseBody` mặc định cho REST.\n- `@Repository` có thêm cơ chế translate exception của tầng persistence sang `DataAccessException`, giúp xử lý lỗi DB nhất quán hơn.\n- Khác biệt lớn nhất trong thực tế là ý nghĩa kiến trúc và integration với từng module (web, data), không phải cách tạo bean cơ bản."
+        },
+        {
+          "question": "`@Bean` trong `@Configuration` vs `@Component` class?",
+          "suggestion": "- `@Bean` hợp khi cần tự tay tạo object (nhất là class thư viện bên ngoài).\n- `@Configuration` mặc định proxy `@Bean` methods để giữ semantics singleton khi gọi chéo.",
+          "answer": "- `@Component` biến chính class đó thành bean, phù hợp khi bạn sở hữu mã nguồn class và chỉ cần inject trực tiếp.\n- `@Bean` trong `@Configuration` cho phép định nghĩa factory method, rất hữu ích khi cấu hình third-party client (`ObjectMapper`, `DataSource`, SDK client).\n- Với `@Configuration(proxyBeanMethods = true)` (mặc định), Spring dùng proxy để đảm bảo khi `@Bean` method gọi lẫn nhau vẫn trả về bean đã quản lý, không tạo mới ngoài ý muốn.\n- Nếu dùng `proxyBeanMethods = false`, startup có thể nhẹ hơn nhưng bạn phải viết method độc lập, tránh gọi chéo kiểu Java thuần."
+        },
+        {
+          "question": "Bean scope: singleton, prototype, request, session?",
+          "suggestion": "- Mặc định là singleton; scope khác chỉ dùng khi có nhu cầu vòng đời cụ thể.\n- Lưu ý bẫy inject `prototype` vào `singleton`.",
+          "answer": "- **Singleton**: một instance mỗi `ApplicationContext`, phù hợp đa số service stateless.\n- **Prototype**: mỗi lần lấy bean tạo instance mới; Spring không quản lý vòng đời hủy của prototype đầy đủ như singleton.\n- **Request/Session**: scope theo HTTP request hoặc session, chỉ dùng trong ứng dụng web-aware context.\n- Nếu singleton cần dùng prototype động, nên inject `ObjectProvider`/`Provider` hoặc method injection để lấy instance mới đúng lúc."
+        },
+        {
+          "question": "Vòng đời bean — `BeanPostProcessor`, `InitializingBean`, `@PostConstruct`?",
+          "suggestion": "- Mô tả theo pipeline: tạo bean -> inject dependency -> callback trước/sau init -> sẵn sàng phục vụ -> destroy.\n- Nêu khi nào dùng `BeanPostProcessor`.",
+          "answer": "- Luồng cơ bản: instantiate bean, bind dependency, chạy `BeanPostProcessor#postProcessBeforeInitialization`, gọi init callback (`@PostConstruct` hoặc `InitializingBean#afterPropertiesSet`), rồi `postProcessAfterInitialization`.\n- Sau đó bean đi vào trạng thái sẵn sàng; khi context đóng, callback hủy như `@PreDestroy` sẽ chạy với singleton bean.\n- `BeanPostProcessor` thường dùng cho hạ tầng/framework (tạo proxy AOP, xử lý annotation), không phải logic nghiệp vụ thông thường.\n- Trong phỏng vấn, nên nhấn mạnh hiểu thứ tự callback để debug lỗi init phức tạp."
+        },
+        {
+          "question": "`@Autowired` — bắt buộc, `@Qualifier`, `@Primary`?",
+          "suggestion": "- Khi có nhiều bean cùng type, phân giải bằng `@Primary` hoặc `@Qualifier`.\n- Constructor injection giúp lỗi wiring lộ sớm lúc startup.",
+          "answer": "- `@Autowired` theo type; nếu chỉ có một candidate thì inject trực tiếp, nếu nhiều candidate sẽ gây ambiguity.\n- `@Primary` đặt bean mặc định ưu tiên, còn `@Qualifier` chỉ rõ bean cần dùng ở điểm inject cụ thể.\n- Với constructor injection, dependency bắt buộc được kiểm tra ngay khi tạo context nên fail-fast hơn runtime path hiếm gặp.\n- Có thể dùng `Optional<T>` hoặc `@Autowired(required = false)` cho dependency thực sự tùy chọn, nhưng cần dùng tiết chế để tránh cấu hình mơ hồ."
+        },
+        {
+          "question": "`@ConfigurationProperties` — binding cấu hình?",
+          "suggestion": "- Dùng class cấu hình type-safe thay vì rải `@Value`.\n- Kết hợp validation để fail-fast khi cấu hình sai.",
+          "answer": "- `@ConfigurationProperties` bind cấu hình theo prefix từ `application.yml/properties` vào object typed, dễ đọc và bảo trì hơn `@Value` rải rác.\n- Có thể dùng immutable constructor binding (đặc biệt với Java record) và Bean Validation (`@NotBlank`, `@Min`) để chặn cấu hình lỗi ngay lúc startup.\n- Cách này phù hợp cho cấu hình nhiều field như client timeout, retry, endpoint, thay vì ghép chuỗi thủ công trong service.\n- Trong Boot 3.x, đây là pattern được khuyến nghị cho cấu hình trung tâm của module."
+        },
+        {
+          "question": "Spring Boot auto-configuration hoạt động ra sao (ý tưởng)?",
+          "suggestion": "- Boot 3 đọc danh sách auto-config từ `AutoConfiguration.imports`.\n- Auto-config chỉ kích hoạt khi thỏa điều kiện classpath/bean/property.",
+          "answer": "- Spring Boot nạp các lớp auto-configuration từ file `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` (thay vai trò `spring.factories` cũ cho phần này).\n- Mỗi auto-config dùng các điều kiện như `@ConditionalOnClass`, `@ConditionalOnMissingBean`, `@ConditionalOnProperty` để chỉ bật khi phù hợp.\n- Vì vậy Boot có thể \"convention over configuration\": có dependency là chạy được, nhưng vẫn dễ override bằng bean do bạn tự khai báo.\n- Khi debug, `--debug` hoặc condition evaluation report giúp biết auto-config nào được áp dụng hay bị bỏ qua."
+        },
+        {
+          "question": "`@SpringBootApplication` gồm gì?",
+          "suggestion": "- Đây là annotation tổng hợp cho app Boot chuẩn.\n- Nắm 3 thành phần chính và phạm vi scan mặc định.",
+          "answer": "- `@SpringBootApplication` là tổ hợp của `@SpringBootConfiguration` (meta của `@Configuration`), `@EnableAutoConfiguration` và `@ComponentScan`.\n- Mặc định, component scan bắt đầu từ package chứa class main và quét xuống các package con.\n- Thực hành tốt là đặt class main ở package gốc của ứng dụng để tránh quét thiếu hoặc phải khai báo scan thủ công quá nhiều."
+        },
+        {
+          "question": "Spring MVC flow — DispatcherServlet?",
+          "suggestion": "- Trình bày luồng request qua `DispatcherServlet` và các thành phần chính.\n- Nhấn rõ điểm khác nhau giữa trả view và trả JSON.",
+          "answer": "- Request đi vào `DispatcherServlet`, sau đó Spring tìm handler phù hợp qua `HandlerMapping`.\n- Trước/sau controller có thể chạy interceptor (`preHandle`, `postHandle`, `afterCompletion`).\n- Kết quả từ controller được render qua `ViewResolver` (MVC view) hoặc `HttpMessageConverter` (REST JSON/XML).\n- Mô hình này tách rõ routing, xử lý nghiệp vụ, và serialization nên dễ mở rộng bằng filter/interceptor/exception handler."
+        },
+        {
+          "question": "`@ControllerAdvice` / `@ExceptionHandler`?",
+          "suggestion": "- Dùng để gom xử lý lỗi tập trung thay vì `try-catch` rải rác.\n- Chuẩn hóa format lỗi cho client.",
+          "answer": "- `@ControllerAdvice` áp dụng cross-cutting cho nhiều controller, trong đó `@ExceptionHandler` map exception sang HTTP response phù hợp.\n- Cách này giúp chuẩn hóa cấu trúc lỗi (timestamp, code, message, traceId) và tránh lặp code xử lý lỗi ở từng endpoint.\n- Với Spring 6/Boot 3, có thể tận dụng `ProblemDetail` để trả lỗi theo chuẩn RFC 7807 cho API hiện đại.\n- Nên tách lỗi nghiệp vụ và lỗi hệ thống để log/alert đúng mức độ."
+        },
+        {
+          "question": "Validation — `@Valid`, `@Validated`, Bean Validation?",
+          "suggestion": "- `@Valid` thường dùng cho validate object đầu vào; `@Validated` hỗ trợ group/method-level.\n- Trả lời kèm cách xử lý lỗi validation thống nhất.",
+          "answer": "- Spring tích hợp Jakarta Bean Validation (thường dùng Hibernate Validator) để kiểm tra DTO/entity qua annotation như `@NotNull`, `@Email`, `@Size`.\n- `@Valid` hay đặt ở tham số request body để kích hoạt validate object graph; `@Validated` mạnh hơn khi cần validation group hoặc method-level validation trên service.\n- Với request body sai, MVC thường ném `MethodArgumentNotValidException`; bạn nên xử lý tập trung ở `@ControllerAdvice` để trả thông điệp rõ ràng.\n- Trade-off là validation annotation chỉ nên chứa rule tổng quát; rule nghiệp vụ phức tạp vẫn nên đặt trong service."
+        },
+        {
+          "question": "AOP — Aspect, Pointcut, Advice (Before/After/Around)?",
+          "suggestion": "- Dùng AOP cho concern cắt ngang như logging, audit, transaction boundary.\n- Nêu hạn chế proxy và bẫy self-invocation trong Spring AOP.",
+          "answer": "- AOP tách logic cross-cutting khỏi business code: `Pointcut` chọn join point, `Advice` định nghĩa hành vi chạy trước/sau/quanh method.\n- `Around` linh hoạt nhất vì có thể quyết định có gọi tiếp method gốc hay không, phù hợp đo thời gian hoặc retry có kiểm soát.\n- Spring AOP dựa trên proxy (JDK dynamic proxy hoặc CGLIB), nên call nội bộ cùng class (**self-invocation**) không đi qua proxy và có thể làm `@Transactional`/`@Async` không hiệu lực.\n- Vì vậy thiết kế thường tách method cần AOP sang bean khác hoặc dùng kiến trúc rõ boundary."
+        },
+        {
+          "question": "`@Transactional` — propagation, isolation, rollback?",
+          "suggestion": "- Trọng tâm phỏng vấn: `REQUIRED` vs `REQUIRES_NEW`, mức isolation, và quy tắc rollback mặc định.\n- Nêu trade-off nhất quán dữ liệu và hiệu năng.",
+          "answer": "- **Propagation** quyết định cách tham gia transaction: `REQUIRED` (mặc định, tham gia nếu đã có), `REQUIRES_NEW` (mở transaction mới độc lập), `NESTED` (savepoint, phụ thuộc transaction manager/DB).\n- **Isolation** kiểm soát anomaly đọc/ghi: `READ_COMMITTED` phổ biến, `REPEATABLE_READ` giảm non-repeatable read, `SERIALIZABLE` an toàn cao nhưng giảm concurrency.\n- Mặc định Spring rollback với unchecked exception (`RuntimeException`, `Error`); checked exception cần cấu hình thêm như `rollbackFor`.\n- Trong thực tế, chọn isolation/propagation nên dựa trên use case nghiệp vụ và lock contention thực tế, không đẩy tất cả lên mức cao nhất."
+        },
+        {
+          "question": "`@Async` — điều kiện hoạt động?",
+          "suggestion": "- Cần bật `@EnableAsync` và gọi qua proxy (không self-call).\n- Luôn cấu hình `Executor` riêng cho workload.",
+          "answer": "- Để `@Async` hoạt động, ứng dụng cần bật `@EnableAsync` và method phải được gọi qua bean proxy của Spring.\n- Nếu gọi nội bộ trong cùng class thì sẽ chạy đồng bộ như method thường.\n- Nên khai báo `TaskExecutor`/`ThreadPoolTaskExecutor` với pool size, queue, rejection policy phù hợp thay vì dùng mặc định cho production.\n- Exception của method trả `void` cần `AsyncUncaughtExceptionHandler`; còn trả `CompletableFuture` thì xử lý lỗi qua pipeline future rõ ràng hơn."
+        },
+        {
+          "question": "Spring Security filter chain — ý tưởng?",
+          "suggestion": "- Security xử lý request theo chuỗi filter trước khi vào controller.\n- Boot 3/Security 6 cấu hình bằng bean `SecurityFilterChain`.",
+          "answer": "- Spring Security chặn request tại tầng filter để thực hiện authentication rồi authorization trước khi business code chạy.\n- Mỗi filter đảm nhận một phần (parse credential/token, thiết lập `SecurityContext`, kiểm tra quyền, xử lý exception bảo mật).\n- Từ Spring Security 6 (thường đi với Boot 3), cách cấu hình chuẩn là định nghĩa bean `SecurityFilterChain`, không còn dùng `WebSecurityConfigurerAdapter`.\n- Thiết kế tốt là tách nhiều chain theo path nếu cần (API nội bộ, actuator, public endpoint) để chính sách rõ ràng và ít nhầm lẫn."
+        },
+        {
+          "question": "OAuth2 Resource Server với JWT?",
+          "suggestion": "- Resource Server phải verify chữ ký và các claim quan trọng, không chỉ decode token.\n- Map claim sang authority nhất quán với rule phân quyền.",
+          "answer": "- Ở chế độ Resource Server, Spring Security xác thực JWT bằng public key/JWK Set URI, rồi kiểm tra các ràng buộc như `iss`, thời hạn (`exp`), và có thể thêm `aud`.\n- Sau khi token hợp lệ, claim được chuyển thành `Authentication` và authority trong `SecurityContext` để dùng cho `@PreAuthorize` hay rule HTTP.\n- Thực tế nên cache JWK hợp lý và chuẩn hóa mapping role/scope để tránh lệch giữa các service.\n- JWT chỉ phù hợp khi cần stateless; nếu cần revoke tức thời mạnh, thường phải kết hợp blacklist/introspection hoặc TTL ngắn."
+        },
+        {
+          "question": "Actuator — endpoint, bảo mật?",
+          "suggestion": "- Chỉ expose endpoint cần thiết, không mở toàn bộ ra internet.\n- Tách cổng/network policy và áp auth cho endpoint nhạy cảm.",
+          "answer": "- Actuator cung cấp endpoint vận hành như `health`, `metrics`, `prometheus`, `info`, rất hữu ích cho monitoring và autoscaling.\n- Tuy nhiên endpoint như `env`, `configprops`, `heapdump` có thể lộ thông tin nhạy cảm nên cần giới hạn chặt (`management.endpoints.web.exposure.include`).\n- Thực hành tốt là đặt management port riêng hoặc network segment riêng, kết hợp authentication/authorization rõ ràng.\n- Trong phỏng vấn, nên nhấn mạnh nguyên tắc \"minimal exposure\" và quan sát được nhưng không lộ bí mật hệ thống."
+        },
+        {
+          "question": "Spring Boot 2 vs 3 — điểm chính?",
+          "suggestion": "- Điểm chắc chắn cần nêu: Java 17+ và chuyển namespace `javax.*` sang `jakarta.*`.\n- Bổ sung thay đổi về Security config và stack observability/native.",
+          "answer": "- Spring Boot 3 nâng baseline lên **Java 17+** và dựa trên Spring Framework 6, đồng thời chuyển hoàn toàn sang hệ Jakarta EE (`javax.*` -> `jakarta.*`).\n- Nhiều ứng dụng phải sửa import API servlet/validation/JPA và cập nhật dependency tương thích Jakarta.\n- Về security, cấu hình hiện đại dùng `SecurityFilterChain` bean thay cho `WebSecurityConfigurerAdapter` cũ.\n- Boot 3 cũng tăng cường observability (Micrometer/Tracing) và hỗ trợ native image tốt hơn, nhưng migration cần chạy test hồi quy kỹ do thay đổi nền tảng lớn."
+        },
+        {
+          "question": "`@Scheduled` — fixedRate vs fixedDelay? Cron?",
+          "suggestion": "- `fixedRate` tính theo thời điểm bắt đầu, `fixedDelay` tính sau khi job trước kết thúc.\n- Task dài cần scheduler pool phù hợp để tránh dồn hàng.",
+          "answer": "- `fixedRate` chạy theo chu kỳ kể từ lúc bắt đầu lần trước, phù hợp job cần tần suất đều.\n- `fixedDelay` đợi job trước hoàn tất rồi mới chờ delay, phù hợp khi không muốn chồng lấn công việc.\n- `cron` dùng cho lịch theo thời điểm cụ thể (ví dụ 0 0 2 * * * chạy 2h sáng).\n- Trong production, cần cấu hình `TaskScheduler`/thread pool và chiến lược idempotency hoặc distributed lock nếu có nhiều instance chạy cùng job."
+        },
+        {
+          "question": "Spring MVC — `HandlerInterceptor` dùng khi nào so với Filter?",
+          "suggestion": "- Filter ở tầng Servlet, Interceptor ở tầng Spring MVC sau khi đã chọn handler.\n- Chọn theo mức truy cập context cần dùng.",
+          "answer": "- **Filter** là chuẩn Servlet, chạy rất sớm (trước `DispatcherServlet`), phù hợp cho concern hạ tầng chung như CORS, gzip, logging request thô.\n- **HandlerInterceptor** chạy trong pipeline MVC nên truy cập được `HandlerMethod`, hữu ích cho audit theo controller, kiểm tra quyền theo annotation hoặc add model attribute.\n- Nếu cần xử lý cả static resource hoặc non-Spring endpoint thì dùng Filter; nếu cần ngữ cảnh controller thì Interceptor phù hợp hơn.\n- Nhiều hệ thống dùng cả hai, mỗi loại giải quyết đúng lớp trách nhiệm của nó."
+        },
+        {
+          "question": "`ResponseEntity` vs `@ResponseBody` — khác gì?",
+          "suggestion": "- `@ResponseBody` tập trung serialize body; `ResponseEntity` cho phép điều khiển đầy đủ status/header/body.\n- REST thực tế thường dùng `ResponseEntity` cho endpoint cần semantics HTTP rõ.",
+          "answer": "- `@ResponseBody` (hoặc `@RestController`) nói với Spring rằng return value sẽ được ghi trực tiếp ra response body qua message converter.\n- `ResponseEntity` bao bọc thêm HTTP status và header, nên phù hợp khi cần trả `201 Created`, `Location`, `ETag`, cache header, hoặc custom status.\n- Với endpoint đơn giản luôn trả `200`, có thể trả object trực tiếp; nhưng API chuẩn thường dùng `ResponseEntity` ở các case tạo/cập nhật/xử lý lỗi để diễn đạt đúng semantics HTTP.\n- Chọn cách nào nên dựa trên mức kiểm soát protocol mà endpoint cần."
+        },
+        {
+          "question": "Spring `JdbcTemplate` vs JPA — khi chọn raw JDBC template?",
+          "suggestion": "- JPA mạnh cho domain CRUD và mapping object; `JdbcTemplate` mạnh khi cần SQL chủ động, batch, query tối ưu sâu.\n- Nhiều hệ thống chọn chiến lược hybrid.",
+          "answer": "- **JPA/Hibernate** tăng tốc phát triển domain-centric CRUD nhờ entity mapping, dirty checking và repository abstraction.\n- **JdbcTemplate** phù hợp khi cần kiểm soát SQL tuyệt đối, query report phức tạp, batch write lớn, hoặc tối ưu truy vấn theo DB-specific feature.\n- Trade-off: JPA giảm boilerplate nhưng có thể phát sinh N+1 và overhead ORM nếu dùng không cẩn thận; JdbcTemplate minh bạch hiệu năng hơn nhưng tốn công mapping thủ công.\n- Trong thực tế phỏng vấn, câu trả lời tốt thường là \"dùng kết hợp\": JPA cho phần nghiệp vụ chuẩn, JdbcTemplate/jOOQ cho hot path cần tối ưu."
+        }
+      ]
+    }
+  ]
+}

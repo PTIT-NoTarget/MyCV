@@ -1,0 +1,76 @@
+{
+  "id": "16",
+  "title": "Theo CV — giới thiệu, học vấn, kỹ năng",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Anh/chị giới thiệu ngắn gọn về bản thân và lý do ứng tuyển vị trí này?",
+          "suggestion": "Trả lời theo 3 ý: năng lực cốt lõi, thành tích gần nhất, lý do chọn công ty.",
+          "answer": "Em là Ngô Đăng Hán, Fullstack Developer gần 3 năm kinh nghiệm, tập trung Java/Spring Boot ở backend và Angular/Vue ở frontend. Em đã làm các hệ thống ERP, logistics và tích hợp kế toán, nên quen với bài toán nghiệp vụ nhiều rule và dữ liệu liên phòng ban. Điểm mạnh của em là đi trọn vòng đời một tính năng từ API, DB đến UI và CI/CD production. Em ứng tuyển vị trí này vì sản phẩm và bài toán kỹ thuật phù hợp định hướng Fullstack dài hạn của em, đồng thời em có thể đóng góp sớm ngay từ giai đoạn triển khai."
+        },
+        {
+          "question": "Tại sao Fullstack thay vì chỉ Backend hoặc Frontend?",
+          "suggestion": "Nhấn mạnh giá trị end-to-end ownership và giảm handoff giữa backend-frontend.",
+          "answer": "Em chọn Fullstack vì muốn chịu trách nhiệm end-to-end cho một tính năng, từ thiết kế API, mô hình dữ liệu tới trải nghiệm người dùng. Cách làm này giúp giảm thời gian handoff giữa các team và xử lý bug nhanh hơn vì em nắm toàn bộ luồng. Ở các dự án như POS/F-CIM, em thấy rõ lợi ích: khi thay đổi rule nghiệp vụ, em có thể cập nhật đồng thời backend và UI nên time-to-release tốt hơn."
+        },
+        {
+          "question": "Chương trình CNTT PTIT giúp gì cho công việc?",
+          "suggestion": "Liên hệ kiến thức nền với quyết định kỹ thuật hàng ngày trong dự án thực tế.",
+          "answer": "PTIT cho em nền tảng chắc về CTDL&GT, CSDL, OOP và tư duy thiết kế hệ thống. Khi làm việc thực tế, các môn này giúp em chọn cấu trúc dữ liệu hợp lý, viết query tối ưu và thiết kế code dễ bảo trì hơn. ICPC rèn cho em thói quen nghĩ về edge case và độ phức tạp, nên khi review hoặc debug em thường phát hiện sớm các tình huống biên."
+        },
+        {
+          "question": "Thời gian học 9/2021 — 1/2026 — đã tốt nghiệp chưa? Ảnh hưởng full-time?",
+          "suggestion": "Trả lời rõ trạng thái hiện tại + cách đảm bảo cam kết full-time.",
+          "answer": "Hiện em đã hoàn thành phần lớn chương trình và sắp xếp lịch học theo hướng không ảnh hưởng công việc full-time. Trong giai đoạn có môn/đồ án, em chủ động lên kế hoạch trước với quản lý để không ảnh hưởng deadline dự án. Nếu cần, em sẵn sàng cung cấp mốc thời gian cụ thể về tốt nghiệp để công ty yên tâm về tính ổn định lâu dài."
+        },
+        {
+          "question": "Spring Security đã dùng cụ thể thế nào trên các dự án?",
+          "suggestion": "Nêu rõ cơ chế xác thực, phân quyền, và cách xử lý token ở thực tế.",
+          "answer": "Em thường triển khai Spring Security theo mô hình stateless với JWT cho API. Ở mức phân quyền, em kết hợp role-based và kiểm tra theo nghiệp vụ (ví dụ chỉ owner hoặc manager mới được thao tác dữ liệu nhạy cảm). Khi hệ thống cần tích hợp chuẩn hơn, em dùng OAuth2 Resource Server để validate token và tách rõ Auth service với Business service. Về vận hành, em ưu tiên access token ngắn hạn, refresh token có kiểm soát và audit log cho các endpoint quan trọng."
+        },
+        {
+          "question": "Monolith vs microservices — khi nào chọn?",
+          "suggestion": "Chọn theo độ phức tạp domain và năng lực vận hành, không chọn theo xu hướng.",
+          "answer": "Em bắt đầu bằng monolith khi sản phẩm còn nhỏ hoặc team chưa lớn, vì triển khai nhanh, debug đơn giản và chi phí vận hành thấp. Chỉ chuyển sang microservices khi domain tách rõ, cần scale độc lập hoặc có nhiều team phát triển song song. Đổi lại phải chấp nhận chi phí observability, tracing, CI/CD và quản lý dữ liệu phân tán cao hơn. Với dự án học tập SocialNetwork, em dùng microservices để luyện boundary và giao tiếp bất đồng bộ, còn dự án business nhỏ em vẫn ưu tiên modular monolith."
+        },
+        {
+          "question": "Kafka trong dự án giải quyết bài toán gì?",
+          "suggestion": "Nêu bài toán cụ thể: async, giảm coupling, chịu tải tốt hơn; nhớ idempotency.",
+          "answer": "Em dùng Kafka cho các luồng bất đồng bộ như gửi thông báo, đồng bộ dữ liệu hoặc xử lý hậu kỳ sau giao dịch. Lợi ích chính là tách producer-consumer để giảm coupling và hấp thụ spike traffic tốt hơn so với gọi sync trực tiếp. Khi triển khai, em luôn thiết kế consumer idempotent (dựa trên message key hoặc business key) để tránh xử lý trùng, vì thực tế hệ thống message có thể giao lại."
+        },
+        {
+          "question": "Redis dùng làm gì (cache, session, pub/sub)?",
+          "suggestion": "Trình bày theo 3 use case chính: cache, session/token, và pub/sub realtime.",
+          "answer": "Trong dự án thực tế, em dùng Redis chủ yếu cho cache dữ liệu đọc nhiều để giảm tải DB và cải thiện latency. Ngoài ra Redis phù hợp lưu session/token ngắn hạn hoặc OTP với TTL rõ ràng. Với bài toán realtime, em dùng Redis Pub/Sub làm lớp phân phối message giữa nhiều instance WebSocket. Em luôn đặt TTL và chiến lược invalidation ngay từ đầu để tránh cache stale."
+        },
+        {
+          "question": "Elasticsearch trong SocialNetwork — đồng bộ dữ liệu thế nào?",
+          "suggestion": "Nói rõ cơ chế đồng bộ và nguyên tắc eventual consistency.",
+          "answer": "Với Elasticsearch, em coi đây là read model phục vụ search nên không cập nhật trực tiếp từ UI. Dữ liệu thường được đồng bộ qua event (ví dụ Kafka) hoặc job đồng bộ định kỳ tùy mức quan trọng của realtime. Em chấp nhận eventual consistency, đồng thời thiết kế cơ chế reindex/retry để xử lý event lỗi. Cách này giúp search nhanh, linh hoạt filter, nhưng vẫn giữ nguồn dữ liệu chuẩn ở database chính."
+        },
+        {
+          "question": "Framework front-end dùng nhiều nhất? Vue 3 Composition API?",
+          "suggestion": "Nêu framework dùng chính, rồi giải thích vì sao Composition API phù hợp dự án thực tế.",
+          "answer": "Framework frontend em dùng nhiều là Vue 3 và Angular, tùy dự án. Với Vue 3, em ưu tiên Composition API khi component có nhiều logic dùng lại vì có thể tách thành composables theo feature, dễ test và dễ maintain. Ví dụ em tách logic filter, phân trang, permission thành các composable độc lập để tái sử dụng cho nhiều màn hình quản trị."
+        },
+        {
+          "question": "CI/CD Jenkins & GitHub Actions — các bước pipeline?",
+          "suggestion": "Mô tả pipeline theo thứ tự stage và thêm tiêu chí quality gate trước deploy.",
+          "answer": "Pipeline em thường thiết kế gồm: checkout code, build, chạy unit test, static scan (nếu có), build/push Docker image, rồi deploy theo môi trường. Trước bước deploy production, em thêm quality gate tối thiểu (test pass, artifact version rõ, approve khi cần). Em đã dùng Jenkins ở hệ thống nội bộ và GitHub Actions ở dự án mới; khác công cụ nhưng nguyên tắc CI/CD em giữ giống nhau để dễ kiểm soát."
+        },
+        {
+          "question": "WebSocket (CareerCoach/SocialNetwork) — scale ngang khác REST ở điểm nào?",
+          "suggestion": "Nhấn mạnh WebSocket là kết nối stateful nên scale cần chiến lược phân phối session/message.",
+          "answer": "Khác với REST request-response ngắn, WebSocket giữ kết nối lâu nên khi scale ngang cần xử lý affinity và broadcast giữa nhiều node. Có hai cách phổ biến: sticky session ở load balancer hoặc dùng broker chung (như Redis Pub/Sub) để đồng bộ message cross-node. Em cũng theo dõi số connection, memory và backpressure để tránh nghẽn tài nguyên khi traffic tăng đột biến."
+        },
+        {
+          "question": "MinIO S3-compatible — presigned URL dùng khi nào?",
+          "suggestion": "Dùng presigned URL khi muốn client truy cập object trực tiếp nhưng vẫn kiểm soát quyền và thời hạn.",
+          "answer": "Presigned URL phù hợp khi cần cho client upload/download trực tiếp lên MinIO/S3 mà không cấp credential dài hạn cho client. Backend chỉ ký URL với scope và thời gian sống ngắn, hết hạn thì URL không dùng được nữa. Cách này giảm tải server trung gian, tăng tốc truyền file, đồng thời vẫn giữ được kiểm soát truy cập theo từng object."
+        }
+      ]
+    }
+  ]
+}

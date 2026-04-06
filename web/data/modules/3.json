@@ -1,0 +1,86 @@
+{
+  "id": "3",
+  "title": "Java — Đa luồng & đồng bộ",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Process vs Thread trong Java?",
+          "suggestion": "- Process có không gian nhớ riêng, isolation cao.\n- Thread là đơn vị thực thi trong process, chia sẻ heap.\n- Nhấn mạnh trade-off giữa chi phí và mức cô lập lỗi.",
+          "answer": "- Process tách biệt tài nguyên và bộ nhớ, nên lỗi crash thường không kéo sập process khác.\n- Thread nhẹ hơn process, tạo/chuyển ngữ cảnh rẻ hơn và chia sẻ dữ liệu trong cùng JVM.\n- Trong Java server, thường dùng nhiều thread trong một process để xử lý concurrent request.\n- Trade-off: chia sẻ heap làm tăng nguy cơ race condition, cần cơ chế đồng bộ đúng."
+        },
+        {
+          "question": "Cách tạo thread? `Runnable` vs `Callable`?",
+          "suggestion": "- Tạo task bằng `Runnable`/`Callable`, giao cho executor thay vì tự quản lý thread thô.\n- `Callable` hỗ trợ return value và checked exception.\n- Nêu `Future`/`CompletableFuture` cho xử lý kết quả bất đồng bộ.",
+          "answer": "- Có thể tạo trực tiếp `Thread`, nhưng thực tế production ưu tiên `ExecutorService` để tái sử dụng thread và kiểm soát tài nguyên.\n- `Runnable` không trả kết quả; `Callable<T>` trả `T` và có thể ném checked exception.\n- `submit(callable)` trả `Future<T>` để lấy kết quả/hủy task.\n- Trade-off: tự tạo quá nhiều thread dễ quá tải; executor giúp giới hạn concurrency rõ ràng."
+        },
+        {
+          "question": "`ExecutorService`, `ThreadPoolExecutor` — tham số core/max pool, queue?",
+          "suggestion": "- Giải thích tương tác `corePoolSize`, `maximumPoolSize`, `workQueue`.\n- Nêu chiến lược sizing theo CPU-bound vs I/O-bound.\n- Bắt buộc có chính sách quá tải (`RejectedExecutionHandler`).",
+          "answer": "- `corePoolSize` là số worker nền; task mới thường vào queue trước khi tăng tới `maximumPoolSize` (tùy loại queue).\n- Nếu queue đầy và đã tới max, executor gọi `RejectedExecutionHandler`.\n- CPU-bound thường đặt pool gần số core; I/O-bound có thể cao hơn do thời gian chờ.\n- Trade-off: queue quá lớn dễ tăng latency/OOM, queue quá nhỏ dễ reject sớm; cần tune theo SLO và pattern tải thực."
+        },
+        {
+          "question": "`synchronized` — monitor, static vs instance?",
+          "suggestion": "- `synchronized` vừa đảm bảo loại trừ lẫn nhau vừa cung cấp memory visibility.\n- Method instance khóa `this`, static method khóa `Class` object.\n- Cảnh báo deadlock khi thứ tự lấy lock không nhất quán.",
+          "answer": "- `synchronized` trên instance method dùng monitor của đối tượng hiện tại; trên static method dùng monitor của class.\n- Ngoài mutual exclusion, nó tạo happens-before giữa unlock và lock kế tiếp trên cùng monitor.\n- Dùng block `synchronized(lock)` giúp khóa phạm vi hẹp hơn method-level để giảm contention.\n- Trade-off: dễ dùng và an toàn, nhưng lock thô hoặc lồng lock không chuẩn có thể gây deadlock và giảm throughput."
+        },
+        {
+          "question": "`volatile` làm gì?",
+          "suggestion": "- `volatile` đảm bảo visibility + ordering cho biến đó.\n- Không đảm bảo atomic cho phép toán tổng hợp (`count++`).\n- Phù hợp cờ trạng thái, publish tham chiếu đã khởi tạo xong.",
+          "answer": "- Ghi vào biến `volatile` sẽ được nhìn thấy bởi lần đọc `volatile` sau ở thread khác.\n- Nó ngăn một số reorder nguy hiểm theo JMM, giúp trạng thái điều khiển nhất quán hơn.\n- Tuy nhiên `volatile` không biến thao tác read-modify-write thành atomic; `i++` vẫn có race.\n- Khi cần tăng/giảm an toàn cạnh tranh cao, dùng `Atomic*`, `LongAdder`, hoặc lock phù hợp."
+        },
+        {
+          "question": "`java.util.concurrent.atomic` — `AtomicInteger`, CAS?",
+          "suggestion": "- `AtomicInteger` cung cấp thao tác lock-free dựa trên CAS.\n- Tốt cho counter/state nhỏ cần update nhanh.\n- Contentious cao: cân nhắc `LongAdder` hoặc giảm hotspot.",
+          "answer": "- CAS so sánh giá trị hiện tại với expected và cập nhật nếu khớp, tránh lock nặng ở nhiều tình huống.\n- `AtomicInteger` phù hợp đếm request, sequence nhỏ, trạng thái cờ.\n- Dưới contention cao, CAS retry nhiều lần có thể làm tốn CPU.\n- Ví dụ metric throughput cao thường dùng `LongAdder` để giảm tranh chấp tốt hơn một biến atomic đơn lẻ."
+        },
+        {
+          "question": "`ReentrantLock` vs `synchronized`?",
+          "suggestion": "- `synchronized` đơn giản, ít lỗi dùng sai.\n- `ReentrantLock` linh hoạt hơn (`tryLock`, timeout, interruptible, fairness).\n- Chọn công cụ theo nhu cầu điều phối, không theo \"thói quen\".",
+          "answer": "- `synchronized` có cú pháp gọn, tự giải phóng lock khi thoát block, phù hợp phần lớn critical section.\n- `ReentrantLock` hữu ích khi cần timeout, hủy đợi lock theo interrupt, hoặc thử lock không chặn.\n- Dùng `ReentrantLock` phải `unlock()` trong `finally` để tránh leak lock.\n- Trade-off: lock API mạnh hơn nhưng dễ sai hơn; nếu không cần tính năng nâng cao thì `synchronized` thường dễ bảo trì."
+        },
+        {
+          "question": "`ReadWriteLock`?",
+          "suggestion": "- Nhiều reader song song, writer độc quyền.\n- Hợp workload đọc áp đảo ghi.\n- Cân nhắc overhead lock nếu workload không đủ lệch.",
+          "answer": "- `ReadWriteLock` cho phép nhiều luồng đọc đồng thời khi không có writer.\n- Khi có ghi, writer cần độc quyền để đảm bảo nhất quán dữ liệu.\n- Mô hình này phù hợp cache/registry đọc nhiều ghi ít.\n- Nếu tỷ lệ ghi cao hoặc critical section nhỏ, overhead quản lý read/write lock có thể không lợi so với lock thường."
+        },
+        {
+          "question": "`CountDownLatch`, `CyclicBarrier`, `Semaphore`?",
+          "suggestion": "- `CountDownLatch`: one-shot gate chờ N sự kiện.\n- `CyclicBarrier`: rendezvous có thể tái sử dụng theo vòng.\n- `Semaphore`: giới hạn số permit truy cập tài nguyên.",
+          "answer": "- `CountDownLatch` phù hợp khi một hoặc nhiều thread phải chờ các task khởi tạo hoàn tất.\n- `CyclicBarrier` hợp xử lý theo pha, tất cả thread gặp nhau rồi cùng đi tiếp.\n- `Semaphore` dùng để giới hạn số kết nối/tác vụ đồng thời vào tài nguyên hiếm.\n- Trade-off: chọn primitive đúng ngữ nghĩa giúp code dễ hiểu hơn so với tự dựng wait/notify."
+        },
+        {
+          "question": "`CompletableFuture` — compose async?",
+          "suggestion": "- Phân biệt `thenApply` (map) và `thenCompose` (flatMap async).\n- Kết hợp nhiều luồng bằng `allOf/anyOf`.\n- Tránh gọi blocking nặng trên common pool mặc định.",
+          "answer": "- `CompletableFuture` cho phép xây pipeline bất đồng bộ rõ ràng thay vì callback lồng nhau.\n- `thenApply` xử lý kết quả đồng bộ; `thenCompose` dùng khi bước sau cũng trả `CompletionStage`.\n- `allOf` gom nhiều tác vụ song song rồi đồng bộ tại một điểm.\n- Nên chỉ định executor riêng cho I/O/blocking để tránh làm nghẽn `ForkJoinPool.commonPool()`."
+        },
+        {
+          "question": "Deadlock — điều kiện, cách tránh?",
+          "suggestion": "- Nêu điều kiện deadlock theo Coffman ở mức thực dụng.\n- Cách tránh: lock ordering, timeout, giảm giữ lock lâu.\n- Có thể dùng quan sát thread dump/JFR để chẩn đoán.",
+          "answer": "- Deadlock xảy ra khi các thread chờ vòng tròn tài nguyên và không thread nào tiến tiếp được.\n- Biện pháp chính: áp dụng thứ tự lấy lock toàn cục, tránh nested lock không cần thiết.\n- `tryLock(timeout)` giúp fail-fast thay vì treo vô thời hạn.\n- Trong vận hành, dùng `jstack`/thread dump hoặc công cụ quan sát để tìm chu kỳ chờ và sửa thiết kế khóa."
+        },
+        {
+          "question": "`ThreadLocal` — dùng để làm gì? Rủi ro (pool thread)?",
+          "suggestion": "- `ThreadLocal` lưu state theo từng thread (context, trace id...).\n- Trong thread pool phải dọn dẹp (`remove`) sau khi xong request.\n- Cẩn thận với virtual threads: tránh dùng để cache tài nguyên đắt tiền theo thread.",
+          "answer": "- `ThreadLocal` giúp truyền context xuyên tầng mà không đổi chữ ký hàm quá nhiều.\n- Với pool thread tái sử dụng, quên `remove()` có thể gây rò rỉ dữ liệu giữa request và leak bộ nhớ.\n- Trong mô hình virtual thread per task, lưu tài nguyên đắt trong `ThreadLocal` thường phản tác dụng vì số thread logic rất lớn.\n- Nên dùng pattern `try/finally` hoặc interceptor/filter để set và clear nhất quán."
+        },
+        {
+          "question": "`ConcurrentHashMap` khác `HashMap` + synchronized?",
+          "suggestion": "- `ConcurrentHashMap` không khóa toàn map cho mọi thao tác như `synchronizedMap`.\n- `get` thường không block, iterator weakly-consistent và không ném CME.\n- Java 8+ không còn kiến trúc segment cố định kiểu cũ.",
+          "answer": "- `ConcurrentHashMap` được thiết kế để retrieval concurrency cao; theo JDK docs, `get` nói chung không cần khóa.\n- Cập nhật dùng cơ chế đồng bộ hạt mịn hơn và thao tác atomic như `compute/merge` tiện cho cập nhật đồng thời.\n- Iterator phản ánh trạng thái tại một thời điểm hoặc sau đó (weakly-consistent), không ném `ConcurrentModificationException`.\n- So với `HashMap` + lock ngoài, CHM thường cho throughput tốt hơn trong workload nhiều thread đọc/ghi xen kẽ."
+        },
+        {
+          "question": "`CompletableFuture` — xử lý exception trong chuỗi `then*`?",
+          "suggestion": "- `exceptionally` để fallback khi lỗi; `handle` xử lý cả success/failure.\n- `whenComplete` dùng side effect (log/metric), không thay thế transform.\n- Tránh nuốt lỗi, luôn giữ chain quan sát được.",
+          "answer": "- Khi một stage lỗi, exception sẽ propagate xuống chain cho đến khi gặp stage xử lý phù hợp.\n- `exceptionally` trả giá trị thay thế; `handle` nhận cả kết quả và lỗi để quyết định tiếp.\n- `whenComplete` chạy dù thành công hay thất bại, hợp cho logging/cleanup nhưng không nên biến đổi nghiệp vụ chính.\n- Best practice: chuẩn hóa log + metric lỗi async để tránh mất dấu do lỗi xảy ra ngoài thread gọi ban đầu."
+        },
+        {
+          "question": "`ForkJoinPool.commonPool()` — rủi ro khi dùng mặc định?",
+          "suggestion": "- `commonPool` là tài nguyên dùng chung toàn JVM.\n- Blocking I/O trên đó dễ gây starvation cho task khác (kể cả parallel stream).\n- Task đặc thù nên có executor riêng để cô lập nhiễu.",
+          "answer": "- `ForkJoinPool.commonPool()` là pool mặc định cho nhiều API (ví dụ một số `CompletableFuture` async, parallel stream).\n- Nếu đẩy tác vụ blocking lâu vào pool này, các tác vụ CPU khác có thể thiếu worker và tăng latency.\n- Parallel stream mặc định cũng dùng common pool nên càng dễ \"đạp chân\" nhau giữa các module.\n- Thực tế production thường tách pool theo loại workload (CPU, I/O, background) để kiểm soát tài nguyên tốt hơn."
+        }
+      ]
+    }
+  ]
+}

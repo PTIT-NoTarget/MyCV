@@ -1,0 +1,76 @@
+{
+  "id": "2",
+  "title": "Java — Collections",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Phân cấp `Collection` — `List`, `Set`, `Queue`, `Map`?",
+          "suggestion": "- Mô tả đúng vai trò từng họ: `List`, `Set`, `Queue`, `Map`.\n- Nhấn mạnh `Map` không kế thừa `Collection`.\n- Chọn theo access pattern: index, uniqueness, FIFO/priority, key-lookup.",
+          "answer": "- `List`: có thứ tự và cho phép trùng lặp, phù hợp dữ liệu theo vị trí.\n- `Set`: không cho phần tử trùng theo `equals`/`hashCode`, dùng để đảm bảo uniqueness.\n- `Queue/Deque`: tối ưu mô hình hàng đợi hoặc stack tùy API.\n- `Map`: ánh xạ key-value để tra cứu nhanh theo khóa, không thuộc cây `Collection` nhưng là phần cốt lõi của framework."
+        },
+        {
+          "question": "`ArrayList` vs `LinkedList` — cấu trúc, độ phức tạp, khi nào dùng?",
+          "suggestion": "- So sánh cả Big-O và đặc tính CPU cache.\n- `ArrayList` là default trong đa số case.\n- `LinkedList` chỉ hợp khi đã có iterator và thao tác chèn/xóa giữa nhiều.",
+          "answer": "- `ArrayList` dùng mảng động: truy cập theo index O(1), locality tốt nên thường nhanh trong thực tế.\n- Chèn/xóa giữa danh sách tốn O(n) do dịch phần tử.\n- `LinkedList` cho chèn/xóa O(1) khi đã đứng đúng node, nhưng tìm vị trí theo index vẫn O(n).\n- Trade-off: do overhead node + cache miss, `LinkedList` thường kém hơn kỳ vọng; chỉ nên chọn cho pattern queue/deque đặc thù."
+        },
+        {
+          "question": "`Vector` và `Stack` — có nên dùng?",
+          "suggestion": "- `Vector`/`Stack` là legacy, ít dùng cho code mới.\n- Stack hiện đại nên dùng `Deque` (`ArrayDeque`).\n- Chọn cấu trúc concurrent theo workload (`synchronizedList`, `CopyOnWriteArrayList`).",
+          "answer": "- `Vector` synchronized toàn cục từng method nên đơn giản nhưng kém linh hoạt và thường tốn lock overhead.\n- `Stack` kế thừa `Vector`, API cũ; `Deque` cung cấp `push/pop/peek` sạch hơn và nhanh hơn trong nhiều trường hợp.\n- `CopyOnWriteArrayList` hợp đọc rất nhiều, ghi rất ít; còn ghi thường xuyên thì không phù hợp vì phải copy mảng.\n- Trong codebase mới, thường mặc định `ArrayList`/`ArrayDeque` rồi bổ sung đồng bộ ở tầng phù hợp."
+        },
+        {
+          "question": "`HashMap` hoạt động bên trong (Java 8+)?",
+          "suggestion": "- Nêu 3 bước: tính hash -> bucket index -> xử lý collision.\n- Java 8+ có tree bin để giảm worst-case collision.\n- Giải thích load factor và resize impact.",
+          "answer": "- `HashMap` dùng mảng bucket, index thường tính từ hash đã spread và phép `(n - 1) & hash`.\n- Collision ban đầu là danh sách node; khi bin quá dày (ngưỡng treeify và capacity đủ lớn) có thể chuyển sang cây đỏ-đen.\n- Resize xảy ra khi vượt `capacity * loadFactor` (mặc định 0.75), giúp giữ hiệu năng trung bình O(1).\n- Trade-off: đặt initial capacity hợp lý giảm số lần rehash khi biết trước số lượng phần tử lớn."
+        },
+        {
+          "question": "`HashMap` cho phép null key/value?",
+          "suggestion": "- `HashMap`: cho 1 `null` key và nhiều `null` value.\n- `ConcurrentHashMap`: không cho `null` key/value.\n- Giải thích vì sao trong môi trường concurrent `null` gây mơ hồ.",
+          "answer": "- `HashMap` hỗ trợ một key `null` và nhiều value `null`.\n- `ConcurrentHashMap` cấm cả key lẫn value `null` để tránh mơ hồ giữa \"không có mapping\" và \"mapping tới null\" trong thao tác đồng thời.\n- Điều này cũng giúp các API atomic như `computeIfAbsent` có ngữ nghĩa rõ ràng hơn.\n- Khi migrate từ `HashMap` sang `ConcurrentHashMap`, cần thay `null` bằng sentinel/value object rõ nghĩa."
+        },
+        {
+          "question": "`HashMap` vs `LinkedHashMap` vs `TreeMap`?",
+          "suggestion": "- So sánh theo thứ tự lưu trữ và độ phức tạp.\n- `LinkedHashMap` dùng khi cần order ổn định/LRU.\n- `TreeMap` dùng khi cần range query hoặc dữ liệu đã sort.",
+          "answer": "- `HashMap`: nhanh trung bình O(1), nhưng không cam kết thứ tự iteration.\n- `LinkedHashMap`: giữ thứ tự insertion hoặc access-order, thường dùng làm nền cho cache LRU đơn giản.\n- `TreeMap`: key được sắp thứ tự theo `Comparator`/`Comparable`, thao tác chính O(log n).\n- Trade-off: chọn `TreeMap` khi cần `floor/ceiling/subMap`; nếu chỉ lookup đơn thuần thì `HashMap` thường tối ưu hơn."
+        },
+        {
+          "question": "`HashSet` implement thế nào?",
+          "suggestion": "- `HashSet` thực chất dùng `HashMap` bên dưới.\n- Phần tử set là key map, value chỉ là dummy.\n- Hiệu năng/đúng-sai phụ thuộc `equals` và `hashCode` của element.",
+          "answer": "- Khi `add(e)`, `HashSet` lưu `e` như key trong `HashMap` nội bộ.\n- Vì vậy tính đúng đắn phụ thuộc trực tiếp vào contract `equals`/`hashCode` của class phần tử.\n- Nếu key mutable thay đổi hash sau khi add, `contains/remove` có thể thất bại.\n- Trade-off: đơn giản và nhanh cho uniqueness, nhưng cần thiết kế object key cẩn thận."
+        },
+        {
+          "question": "`PriorityQueue` — heap, độ phức tạp?",
+          "suggestion": "- `PriorityQueue` là binary heap, không phải cấu trúc sorted toàn phần.\n- `offer/poll` O(log n), `peek` O(1).\n- Không thread-safe; đa luồng cân nhắc `PriorityBlockingQueue`.",
+          "answer": "- `PriorityQueue` luôn đảm bảo phần tử ưu tiên cao nhất ở đầu, nhưng iteration không trả về thứ tự tăng dần hoàn chỉnh.\n- `offer`/`poll` có độ phức tạp O(log n), `peek` O(1).\n- Mặc định không synchronized nên không an toàn khi nhiều thread cùng sửa.\n- Với producer-consumer đa luồng cần ưu tiên, `PriorityBlockingQueue` thường phù hợp hơn."
+        },
+        {
+          "question": "Fail-fast vs fail-safe iterator?",
+          "suggestion": "- Fail-fast phát hiện sửa đổi cấu trúc và có thể ném `ConcurrentModificationException`.\n- Nhấn mạnh đây là cơ chế best-effort, không phải đồng bộ hóa.\n- Iterator của collection concurrent thường weakly-consistent, không ném CME.",
+          "answer": "- Iterator fail-fast (như `ArrayList`, `HashMap`) thường ném `ConcurrentModificationException` khi collection bị sửa trái phép trong lúc duyệt.\n- Theo JDK docs, cơ chế này chỉ best-effort để phát hiện bug, không được dùng làm logic điều khiển chương trình.\n- Collection concurrent (ví dụ `ConcurrentHashMap`) dùng iterator weakly-consistent: không ném CME nhưng có thể thấy snapshot \"lai\" giữa trước/sau cập nhật.\n- Trade-off: fail-fast giúp bắt lỗi sớm; weakly-consistent ưu tiên tiến độ trong môi trường đa luồng."
+        },
+        {
+          "question": "`Collections.unmodifiableXxx` vs immutable collection (Java 9+ `List.of`)?",
+          "suggestion": "- `unmodifiableXxx` là view chỉ-đọc, không phải bản sao bất biến tuyệt đối.\n- `List.of` tạo immutable collection thực sự về cấu trúc.\n- Nêu lưu ý deep immutability với phần tử mutable.",
+          "answer": "- `Collections.unmodifiableList` chỉ bọc collection gốc: sửa ở nguồn vẫn phản ánh ở view.\n- `List.of` tạo collection có cấu trúc bất biến (không add/remove/set) và thường cấm phần tử `null`.\n- Dù vậy, nếu phần tử bên trong là object mutable thì trạng thái object vẫn có thể thay đổi (không deep immutable).\n- Với API public, nên trả immutable collection để giảm side effect ngoài ý muốn."
+        },
+        {
+          "question": "`ConcurrentSkipListMap` / `ConcurrentSkipListSet` — khi nào dùng?",
+          "suggestion": "- Skip list concurrent, dữ liệu luôn sorted.\n- Tối ưu cho `headMap/tailMap/subMap` khi có nhiều thread.\n- Đổi lại chi phí cao hơn `ConcurrentHashMap` cho key lookup thuần.",
+          "answer": "- `ConcurrentSkipListMap/Set` cung cấp thứ tự tự nhiên hoặc theo comparator trong môi trường concurrent.\n- Các thao tác chính kỳ vọng O(log n), đồng thời hỗ trợ tốt range query.\n- Phù hợp bài toán như leaderboard, scheduler, time-window indexing.\n- Trade-off: nếu chỉ cần lookup key đơn giản không cần order, `ConcurrentHashMap` thường cho throughput tốt hơn."
+        },
+        {
+          "question": "`BlockingQueue` — `ArrayBlockingQueue` vs `LinkedBlockingQueue`?",
+          "suggestion": "- `ArrayBlockingQueue`: mảng cố định, backpressure rõ.\n- `LinkedBlockingQueue`: thường linh hoạt hơn nhưng dễ phình nếu để quá lớn.\n- Khuyến nghị luôn đặt capacity theo sức xử lý consumer.",
+          "answer": "- `ArrayBlockingQueue` có capacity cố định, bộ nhớ dự đoán được và giúp kiểm soát tốc độ producer.\n- `LinkedBlockingQueue` dùng node liên kết; constructor mặc định có sức chứa rất lớn, có thể gây áp lực bộ nhớ nếu producer nhanh hơn consumer.\n- Trong hệ thống thực tế, việc đặt giới hạn queue là cơ chế backpressure quan trọng để tránh OOM.\n- Trade-off: queue nhỏ giảm latency tail nhưng tăng khả năng bị reject/block; queue lớn hấp thụ burst tốt hơn nhưng có thể che giấu tắc nghẽn."
+        },
+        {
+          "question": "Tại sao `hashCode` của key trong `HashMap` nên **ổn định** khi object là key?",
+          "suggestion": "- Key đổi hash sau khi put sẽ làm map \"mất dấu\" entry.\n- Dùng key bất biến (`String`, UUID, id final) là an toàn nhất.\n- Đây là bug logic khó phát hiện trong production.",
+          "answer": "- `HashMap` định vị entry theo hash tại thời điểm put; nếu key thay đổi field tham gia hash, entry nằm sai bucket logic.\n- Kết quả là `get/remove/containsKey` có thể không tìm thấy dù object trông vẫn \"cùng\" về mặt nghiệp vụ.\n- Best practice: key nên immutable hoặc ít nhất các field dùng cho `equals/hashCode` phải bất biến.\n- Ví dụ điển hình là dùng entity mutable làm key trước khi id được cố định."
+        }
+      ]
+    }
+  ]
+}
