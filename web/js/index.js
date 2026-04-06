@@ -68,19 +68,26 @@
 
   function renderSectionContent(sec, filter) {
     const fq = (filter || "").trim();
+    const nfq = normalize(fq);
     let html = "";
     for (const g of sec.groups) {
       let block = "";
       for (const it of g.items) {
-        if (fq && !normalize(it.question + it.answer).includes(normalize(fq))) continue;
+        if (fq && !normalize(it.question + it.answer).includes(nfq)) continue;
+        const openSearch =
+          fq.length > 0 && normalize(it.question + it.answer).includes(nfq);
+        const openAttr = openSearch ? " open" : "";
         block +=
-          '<div class="qa">' +
-          '<h3 class="qa__q">' +
+          '<details class="qa"' +
+          openAttr +
+          ">" +
+          '<summary class="qa__summary">' +
+          '<span class="qa__q">' +
           renderQuestion(it.question) +
-          "</h3>" +
+          "</span></summary>" +
           '<div class="qa__a">' +
           renderAnswer(it.answer) +
-          "</div></div>";
+          "</div></details>";
       }
       if (!block) continue;
       const gt = g.title;

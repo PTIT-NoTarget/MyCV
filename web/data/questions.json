@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Câu hỏi phỏng vấn — Ngô Đăng Hán (Fullstack / Java / Spring)",
-    "description": "Tài liệu gộp: **câu hỏi theo CV**, **câu hỏi nền tảng & framework** (Baeldung, Oracle/OpenJDK, Spring), **design patterns (GoF & enterprise)**, và **tình huống nghiệp vụ khó**. Hãy điền chi tiết thật vào chỗ `[tự điền]`.",
+    "description": "Tài liệu gộp: **câu hỏi theo CV**, **câu hỏi nền tảng & framework** (Baeldung, Oracle/OpenJDK, Spring), **design patterns (GoF & enterprise)**, **tình huống nghiệp vụ khó** (kèm bài toán tổng quát ngoài dự án), và **deep-dive theo từng dự án**. Hãy điền chi tiết thật vào chỗ `[tự điền]`.",
     "source": "interview.md"
   },
   "sections": [
@@ -91,6 +91,34 @@
             {
               "question": "Optional — dùng đúng/không nên lạm dụng thế nào?",
               "answer": "Phù hợp **return** có thể vắng; tránh field, tham số dài; không dùng `get()` mù; ưu `orElse`, `orElseGet`, `ifPresent`."
+            },
+            {
+              "question": "**Record** (Java 16+) khác class thường thế nào?",
+              "answer": "Record là **immutable data carrier**: constructor, `equals`/`hashCode`/`toString` sinh tự động; field `final`; có thể kèm `compact constructor` để validate. Phù hợp DTO, kết quả trả về — không thay thế entity JPA phức tạp nếu cần lifecycle đặc biệt."
+            },
+            {
+              "question": "**Sealed class/interface** — mục đích?",
+              "answer": "Giới hạn **subclass** được phép (permits) — mô hình phân cấp **exhaustive** khi `switch`/pattern matching; tăng kiểm soát API công khai."
+            },
+            {
+              "question": "Pattern matching cho `switch` (Java 17+) — lợi ích?",
+              "answer": "So khớp **type pattern** + guard (`when`); compiler có thể kiểm tra **exhaustive** với sealed hierarchy — giảm chuỗi `if-instanceof` dài."
+            },
+            {
+              "question": "**Virtual threads** (Java 21) — khi nào hợp lý so với thread cổ điển?",
+              "answer": "Phù hợp **IO-bound** (HTTP client, DB) với số lượng task rất lớn — chi phí tạo nhỏ, scheduler gắn carrier thread. **CPU-bound** vẫn cần pool có giới hạn; tránh block native/FFI không tương thích pinning."
+            },
+            {
+              "question": "Java **module system** (`module-info.java`) — vì sao Spring Boot vẫn thường “unnamed module”?",
+              "answer": "JPMS tách package và ẩn implementation; nhiều thư viện legacy chưa modular — Boot app thường classpath đầy đủ. Hiểu khái niệm **strong encapsulation** của JDK (reflect vào internal) khi upgrade JDK."
+            },
+            {
+              "question": "`ClassLoader` — parent delegation? `NoClassDefFoundError` vs `ClassNotFoundException`?",
+              "answer": "Delegation: con hỏi cha trước — tránh trùng lớp core. `ClassNotFoundException`: không tìm thấy khi **load**. `NoClassDefFoundError`: lớp từng load nhưng **không khởi tạo được** lúc runtime (dependency thiếu, static init fail)."
+            },
+            {
+              "question": "Java Memory Model — **happens-before** liên quan `volatile`, `synchronized`, thread start/join?",
+              "answer": "Đảm bảo thứ tự nhìn thấy thay đổi giữa thread: ghi `volatile` **happens-before** đọc sau; unlock **happens-before** lock cùng monitor; `Thread.start` **happens-before** code trong thread mới. Quan trọng khi tối ưu lock-free."
             }
           ]
         }
@@ -142,6 +170,18 @@
             {
               "question": "`Collections.unmodifiableXxx` vs immutable collection (Java 9+ `List.of`)?",
               "answer": "Unmodifiable: wrapper, nếu giữ reference tới collection gốc có thể vẫn đổi được nội dung bên trong object mutable. `List.of` tạo immutable thật (không thêm/bớt)."
+            },
+            {
+              "question": "`ConcurrentSkipListMap` / `ConcurrentSkipListSet` — khi nào dùng?",
+              "answer": "Cấu trúc **skip list** — **sorted** và concurrent; `O(log n)`; phù hợp **range query** đồng thời (scoreboard, schedule) khi không muốn lock toàn `TreeMap`."
+            },
+            {
+              "question": "`BlockingQueue` — `ArrayBlockingQueue` vs `LinkedBlockingQueue`?",
+              "answer": "Array: **có giới hạn** cố định, memory compact; Linked: thường **unbounded** mặc định (cẩn thận OOM nếu producer nhanh) — nên set capacity. Chọn theo backpressure rõ hay không."
+            },
+            {
+              "question": "Tại sao `hashCode` của key trong `HashMap` nên **ổn định** khi object là key?",
+              "answer": "Nếu field tham gia `hashCode` đổi sau khi đã insert — bucket sai, **get/remove** hỏng. Mutable key là anti-pattern; dùng **id cố định** hoặc `String`/UUID."
             }
           ]
         }
@@ -205,6 +245,14 @@
             {
               "question": "`ConcurrentHashMap` khác `HashMap` + synchronized?",
               "answer": "Segment/bucket-level locking (phiên bản cụ thể có chi tiết khác theo JDK), cho phép đọc đồng thời nhiều hơn; không lock toàn map như `Collections.synchronizedMap` cho mọi thao tác."
+            },
+            {
+              "question": "`CompletableFuture` — xử lý exception trong chuỗi `then*`?",
+              "answer": "Exception lan sang `exceptionally`, `handle`; `whenComplete` luôn chạy; **async** stage cần executor phù hợp. Tránh nuốt lỗi — log và metric."
+            },
+            {
+              "question": "`ForkJoinPool.commonPool()` — rủi ro khi dùng mặc định?",
+              "answer": "Chia sẻ toàn JVM; task blocking có thể **starve** parallel stream khác; parallel stream mặc định dùng common pool — IO blocking trên đó là anti-pattern."
             }
           ]
         }
@@ -236,6 +284,14 @@
             {
               "question": "Công cụ phân tích: heap dump, MAT, async profiler?",
               "answer": "`jcmd`, `jmap`, VisualVM, Eclipse MAT cho leak; async-profiler/JFR cho CPU và allocation — nêu kinh nghiệm thực tế nếu có."
+            },
+            {
+              "question": "Safepoint / STW — vì sao một số tác vụ JVM gây “pause” dài?",
+              "answer": "Thread phải dừng tại **safepoint** cho GC, deopt, một số JVMTI; `System.gc()` không nên lạm dụng; JFR giúp tìm **long pause** và allocation."
+            },
+            {
+              "question": "`DirectByteBuffer` / off-heap — khi nào dùng? Rủi ro?",
+              "answer": "Giảm copy native I/O (Netty, DB driver); không tính vào heap nhưng vẫn giới hạn **MaxDirectMemorySize** — OOM direct buffer. Cần `cleaner`/release đúng cách."
             }
           ]
         }
@@ -327,6 +383,22 @@
             {
               "question": "Spring Boot 2 vs 3 — điểm chính?",
               "answer": "Baseline **Java 17+**, **Jakarta EE** namespace (`javax.*` → `jakarta.*`), native hints (optional); migration cần đổi dependency và cấu hình security."
+            },
+            {
+              "question": "`@Scheduled` — fixedRate vs fixedDelay? Cron?",
+              "answer": "`fixedRate`: khoảng cách giữa **lần bắt đầu**; `fixedDelay`: sau khi **kết thúc** lần trước. Cron cho lịch cụ thể. Cần pool scheduler nếu task dài — tránh block thread mặc định."
+            },
+            {
+              "question": "Spring MVC — `HandlerInterceptor` dùng khi nào so với Filter?",
+              "answer": "Filter ở tầng Servlet (trước DispatcherServlet); Interceptor sau mapping, có quyền truy cập `HandlerMethod` — phù hợp audit theo controller, không cắt static resource nếu không cần."
+            },
+            {
+              "question": "`ResponseEntity` vs `@ResponseBody` — khác gì?",
+              "answer": "`ResponseEntity` kiểm soát **status code** và header đầy đủ; `@ResponseBody` chỉ body. REST API thường kết hợp để trả 201, Location, cache headers."
+            },
+            {
+              "question": "Spring `JdbcTemplate` vs JPA — khi chọn raw JDBC template?",
+              "answer": "Query báo cáo phức tạp, batch bulk, hoặc cần kiểm soát SQL tuyệt đối; JPA tiện CRUD và mapping domain — đôi khi hybrid."
             }
           ]
         }
@@ -542,6 +614,26 @@
             {
               "question": "`EXPLAIN` / query plan — em đọc thế nào?",
               "answer": "Seq scan vs index scan, cost, rows estimate; điều chỉnh index, viết lại query, statistics."
+            },
+            {
+              "question": "`CascadeType` — REMOVE vs orphanRemoval?",
+              "answer": "`CascadeType.REMOVE` xóa con khi xóa cha (phải quản lý lifecycle cẩn thận). `orphanRemoval=true`: xóa entity con khi **bị gỡ khỏi collection** — tiện aggregate root; tránh bật lung tung gây xóa nhầm."
+            },
+            {
+              "question": "`@Embedded` / `@Embeddable` — khi nào dùng?",
+              "answer": "Value object trong cùng bảng (địa chỉ, money) — giảm bảng phụ; mapping cột prefix/override."
+            },
+            {
+              "question": "Second-level cache (Hibernate) — entity nào nên cache?",
+              "answer": "Read-heavy, ít đổi, nhỏ (dictionary); **invalidate** khi update; tránh cache collection lớn không kiểm soát TTL."
+            },
+            {
+              "question": "Pessimistic lock `PESSIMISTIC_WRITE` — trade-off?",
+              "answer": "Giảm conflict bằng khóa hàng; tăng deadlock risk và giảm throughput — chỉ hotspot ngắn (trừ tồn kho)."
+            },
+            {
+              "question": "Postgres vs MSSQL — khác biệt em từng để ý khi làm song song?",
+              "answer": "Postgres: MVCC, `RETURNING`, JSONB; MSSQL: identity/sequence, T-SQL, locking/isolation khác nhau — port query cần test kỹ pagination và datetime."
             }
           ]
         }
@@ -573,6 +665,22 @@
             {
               "question": "Keycloak tích hợp Spring — luồng chung?",
               "answer": "OIDC login; client credentials / authorization code; realm, client, role mapping vào JWT; resource server validate token."
+            },
+            {
+              "question": "REST vs **gRPC** — khi nào chọn gRPC trong microservices?",
+              "answer": "gRPC: binary **Protobuf**, contract rõ (`.proto`), streaming, hiệu năng tốt nội bộ; cần tooling và debug khác HTTP. REST: cache, browser, tích hợp đối tác dễ — thường public API."
+            },
+            {
+              "question": "HTTP/1.1 vs HTTP/2 — ảnh hưởng API?",
+              "answer": "H2 multiplex **một connection** nhiều stream — giảm overhead latency khi nhiều request nhỏ; server push ít dùng; vẫn cần thiết kế API idempotent."
+            },
+            {
+              "question": "HMAC signature webhook — replay attack?",
+              "answer": "Kèm **timestamp + nonce**; server từ chối request quá cũ; lưu nonce TTL; verify secret đối tác."
+            },
+            {
+              "question": "OpenAPI/Swagger — lợi ích cho team Fullstack?",
+              "answer": "Contract rõ cho front/back; codegen client; version và example — giảm hiểu nhầm field (DTO)."
             }
           ]
         }
@@ -924,6 +1032,18 @@
             {
               "question": "**Choreography vs orchestration** trong Saga — ví dụ?",
               "answer": "Choreography: Order service gửi event → Payment → Shipping tự phản ứng; ít điểm trung tâm nhưng khó theo dõi luồng. Orchestration: có **Saga orchestrator** điều phối từng bước — dễ quan sát, rủi ro điểm nghẽn."
+            },
+            {
+              "question": "**Eventual consistency** — user thấy dữ liệu “chưa kịp” — xử lý UX?",
+              "answer": "Optimistic UI có rollback; trạng thái `pending`; poll/WebSocket khi cần; hiển thị “đang đồng bộ…”"
+            },
+            {
+              "question": "**Idempotency-Key** header cho POST — implement?",
+              "answer": "Lưu key + response đã trả trong TTL; request lặp trả cùng mã; transaction hoặc unique constraint."
+            },
+            {
+              "question": "**Distributed lock** vs **leader election** — khác gì?",
+              "answer": "Lock: tránh hai worker cùng làm (Redis/DB advisory lock). Leader election: một instance scheduler (Consul/etcd) — khác mục tiêu."
             }
           ]
         }
@@ -951,6 +1071,22 @@
             {
               "question": "GitHub Actions vs Jenkins?",
               "answer": "GHA: YAML trong repo, runner hosted/self-hosted; Jenkins: plugin ecosystem, on-prem linh hoạt — tùy tổ chức."
+            },
+            {
+              "question": "Angular **Dependency Injection** vs Vue/React — khác tư duy gì?",
+              "answer": "Angular DI first-class (injector tree, module); React chủ yếu composition + context/hooks; Vue 3 provide/inject + composables — testability và boundary khác nhau."
+            },
+            {
+              "question": "Vue 3 **Composition API** vs Options API — khi chọn?",
+              "answer": "Composition: logic nhóm theo feature, reuse composables, TypeScript tốt hơn; Options: đơn giản component nhỏ. `ref`/`reactive` và lifecycle `onMounted`."
+            },
+            {
+              "question": "Nginx reverse proxy — buffer, timeout, `proxy_pass`?",
+              "answer": "SSL termination, gzip, rate limit; `proxy_read_timeout` cho upstream chậm; upstream health — POS/CareerCoach deploy thường gặp."
+            },
+            {
+              "question": "Blue-green / rolling deploy — trade-off downtime?",
+              "answer": "Blue-green: hai môi trường, chuyển traffic nhanh, tốn tài nguyên; rolling: từng pod/instance — phải backward compatible DB/API."
             }
           ]
         }
@@ -974,6 +1110,18 @@
             {
               "question": "Coroutine vs Java thread (ý tưởng)?",
               "answer": "Coroutine nhẹ, structured concurrency, suspend — phù hợp IO nhiều; vẫn chạy trên thread pool bên dưới."
+            },
+            {
+              "question": "`suspend` function compile ra bytecode thế nào (ý tưởng)?",
+              "answer": "State machine **continuation** — mỗi suspend point là label; không block thread khi chờ IO nếu dùng đúng dispatcher."
+            },
+            {
+              "question": "Kotlin **inline** / `reified` — vì sao cần với generic?",
+              "answer": "`inline` chèn bytecode, cho phép `reified T` tại compile-time — tránh type erasure một phần cho DSL và serializer."
+            },
+            {
+              "question": "Kotlin **data class** vs Java **record**?",
+              "answer": "Tương đồng immutable DTO; Kotlin `copy`, destructuring; Java record ít feature hơn nhưng chuẩn nền tảng."
             }
           ]
         }
@@ -1029,6 +1177,14 @@
             {
               "question": "CI/CD Jenkins & GitHub Actions — các bước pipeline?",
               "answer": "Build, test, scan (nếu có), Docker build/push, deploy; F-CIM Jenkins; POS/CareerCoach GHA."
+            },
+            {
+              "question": "WebSocket (CareerCoach/SocialNetwork) — scale ngang khác REST ở điểm nào?",
+              "answer": "Stateful connection; cần sticky hoặc message broker chung; giám sát số connection và memory per node."
+            },
+            {
+              "question": "MinIO S3-compatible — presigned URL dùng khi nào?",
+              "answer": "Client upload/download trực tiếp object storage mà không lộ credential server; TTL ngắn."
             }
           ]
         }
@@ -1048,6 +1204,14 @@
             {
               "question": "Tích hợp SQL Accounting — giao thức, mapping dữ liệu, xử lý lệch?",
               "answer": "[tự điền kỹ thuật thật]; idempotent, log đối soát, rollback nghiệp vụ."
+            },
+            {
+              "question": "Một bug/hiểu nhầm requirement với khách nước ngoài — em xử lý và học được gì?",
+              "answer": "[tự điền STAR]; làm rõ acceptance, viết lại ví dụ (example), trace log."
+            },
+            {
+              "question": "Chuẩn hóa tài liệu kỹ thuật (API, mapping hóa đơn) cho team và khách — em làm gì?",
+              "answer": "[tự điền]; OpenAPI, diagram sequence, glossary thuật ngữ kế toán vs IT."
             }
           ]
         },
@@ -1061,6 +1225,14 @@
             {
               "question": "Lý do chuyển từ Facenet sang Rabiloo?",
               "answer": "[tự điền tích cực, trung thực]."
+            },
+            {
+              "question": "Pipeline Jenkins em tham gia: stage nào fail hay nhất? Cách fix?",
+              "answer": "[tự điền]; flaky test, dependency mirror, credential rotation."
+            },
+            {
+              "question": "Tích hợp phần mềm thuế — em xử lý **môi trường sandbox/UAT** thế nào trước production?",
+              "answer": "[tự điền]; dữ liệu ẩn danh, feature flag, rollback plan."
             }
           ]
         },
@@ -1070,6 +1242,22 @@
             {
               "question": "Đo “+100% báo giá/ngày” thế nào? Module em làm sâu nhất?",
               "answer": "[tự điền số liệu]; STAR một thách thức kỹ thuật."
+            },
+            {
+              "question": "Luồng nghiệp vụ **báo giá → duyệt → đặt hàng** — entity/transaction boundary em thiết kế?",
+              "answer": "[tự điền]; trạng thái đơn, không double-submit, audit trail."
+            },
+            {
+              "question": "ERP chuỗi cung ứng thép — em xử lý **đơn vị tính, quy đổi, làm tròn** thế nào?",
+              "answer": "[tự điền]; BigDecimal, policy làm tròn theo nghiệp vụ, test biên."
+            },
+            {
+              "question": "Tích hợp hệ thống thứ 3 trong F-CIM — timeout, retry, circuit breaker cụ thể?",
+              "answer": "[tự điền]; Resilience4j hoặc Spring Retry; DLQ nếu async."
+            },
+            {
+              "question": "Angular module em phụ trách — lazy loading, shared module, performance?",
+              "answer": "[tự điền]; trackBy, OnPush nếu có, bundle size."
             }
           ]
         },
@@ -1079,6 +1267,18 @@
             {
               "question": "Engine template — POI, Doc4j, JodConverter, pipeline docx → PDF?",
               "answer": "Giảm code lặp; chuyển đổi qua LibreOffice nếu dùng JodConverter; tối ưu concurrent bằng queue/pool."
+            },
+            {
+              "question": "Merge dữ liệu vào docx — xử lý **placeholder trùng, bảng động, ảnh chèn**?",
+              "answer": "[tự điền]; POI loop row; giới hạn kích thước; lỗi template version."
+            },
+            {
+              "question": "Font/encoding tiếng Việt khi xuất PDF — em gặp lỗi gì và fix?",
+              "answer": "[tự điền]; embed font, locale, kiểm tra trên server headless."
+            },
+            {
+              "question": "Bảo mật: tránh **SSRF/path traversal** khi user chọn template path?",
+              "answer": "Whitelist file id, lưu template trong storage kiểm soát; không tin path trực tiếp từ client."
             }
           ]
         },
@@ -1088,6 +1288,18 @@
             {
               "question": "Tối ưu query và AOP phê duyệt?",
               "answer": "Index, tránh N+1; annotation + aspect cho kiểm tra quyền/audit thống nhất."
+            },
+            {
+              "question": "Mô hình **phê duyệt nhiều bước** — em lưu trạng thái và lịch sử thế nào?",
+              "answer": "[tự điền]; bảng approval_step, actor, timestamp; reject/resubmit."
+            },
+            {
+              "question": "`@Annotation` + AOP — ví dụ cụ thể một annotation custom và pointcut?",
+              "answer": "[tự điền]; ví dụ `@RequireRole`, `@AuditApproval` — order aspect vs transaction."
+            },
+            {
+              "question": "Theo dõi đơn hàng/vận chuyển — event timeline cho user và báo cáo?",
+              "answer": "[tự điền]; append-only log hoặc domain events; index theo order_id."
             }
           ]
         },
@@ -1097,6 +1309,18 @@
             {
               "question": "Tingee — callback, idempotency? Docker + Nginx + GHA production?",
               "answer": "[tự điền]; SSL termination, secrets, backup DB."
+            },
+            {
+              "question": "Nghiệp vụ cửa hàng: **tồn kho âm, đổi trả, giảm giá** — em model thế nào?",
+              "answer": "[tự điền]; transaction stock, dòng kho (ledger), hóa đơn điều chỉnh."
+            },
+            {
+              "question": "Offline/ mất mạng tại quầy — có chiến lược gì (nếu có/không)?",
+              "answer": "[tự điền trung thực]; local queue, sync conflict, hoặc giải thích giới hạn hiện tại và hướng cải tiến."
+            },
+            {
+              "question": "Giám sát production: log, metric, alert — em dùng gì?",
+              "answer": "[tự điền]; journald/docker logs, health check, uptime."
             }
           ]
         },
@@ -1106,6 +1330,22 @@
             {
               "question": "Đồng nhất CV Web/Mobile? Gemini — rate limit, privacy?",
               "answer": "Backend canonical output; không leak secret; quota/retry. Keycloak identity; MinIO object storage."
+            },
+            {
+              "question": "Schema JSON CV **chuẩn hóa** giữa Flutter và Vue — versioning?",
+              "answer": "[tự điền]; DTO backend, optional field, migration client cũ."
+            },
+            {
+              "question": "**Prompt injection** / abuse API Gemini — biện pháp?",
+              "answer": "Giới hạn độ dài, filter PII, rate limit user, không tin user làm system prompt; log có kiểm soát."
+            },
+            {
+              "question": "Keycloak realm/client — phân quyền role cho tính năng phỏng vấn ảo?",
+              "answer": "[tự điền]; resource server, scope, map claim vào Spring Security."
+            },
+            {
+              "question": "MinIO lưu asset (CV export, file đính kèm) — lifecycle và backup?",
+              "answer": "[tự điền]; bucket policy private, signed URL, backup định kỳ."
             }
           ]
         },
@@ -1115,6 +1355,26 @@
             {
               "question": "WebSocket scale? Feed algorithm?",
               "answer": "[tự điền trung thực]; Redis pub/sub hoặc sticky; chronological/graph."
+            },
+            {
+              "question": "**Saga** distributed transaction — ví dụ một luồng cụ thể (post + notification + counter)?",
+              "answer": "[tự điền]; compensating, idempotent consumer Kafka."
+            },
+            {
+              "question": "Spring Cloud Gateway — route, filter JWT, rate limit?",
+              "answer": "[tự điền]; predicate Path, StripPrefix, forward auth header."
+            },
+            {
+              "question": "Consul — health check fail thì service consumer xử lý ra sao?",
+              "answer": "Instance gỡ khỏi discovery; client retry instance khác; circuit breaker."
+            },
+            {
+              "question": "Feed **fan-out on write vs read** — em chọn gì và vì sao?",
+              "answer": "[tự điền]; trade-off storage vs latency; hot user."
+            },
+            {
+              "question": "Elasticsearch index **post/comment** — mapping tiếng Việt, highlight?",
+              "answer": "[tự điền]; analyzer, multi-field keyword cho sort/filter."
             }
           ]
         },
@@ -1124,6 +1384,10 @@
             {
               "question": "Bài ấn tượng? ICPC giúp engineer thế nào?",
               "answer": "[tự nhớ bài]; tư duy thuật toán, stress, edge case."
+            },
+            {
+              "question": "Áp dụng tư duy thi đấu vào debug production — ví dụ?",
+              "answer": "Giảm phạm vi, invariant, stress test input biên; không đoán mù."
             }
           ]
         }
@@ -1282,6 +1546,101 @@
             {
               "question": "Client cũ vẫn chạy khi backend đổi contract?",
               "answer": "Versioning, feature flag, deprecate có thời hạn; contract test (Pact) nếu team lớn."
+            },
+            {
+              "question": "(Bài toán ngoài dự án) **Mobile cũ** không gửi field mới — backend thêm field bắt buộc?",
+              "answer": "Default value server-side; phase rollout: optional → required sau N phiên bản; telemetry phiên bản app."
+            }
+          ]
+        },
+        {
+          "title": "Flash sale / spike traffic (bổ sung ngoài dự án)",
+          "items": [
+            {
+              "question": "Thiết kế flash sale 10k order/giây — tránh oversell và sập DB?",
+              "answer": "**Queue** request; **token/slot** vào giờ mở bán; **Redis DECR** hoặc Lua atomic cho stock; DB là nguồn thật với optimistic lock cho reconcile; **idempotent** order id; **rate limit** per user; đọc từ cache có TTL; **pre-warm** và autoscale."
+            },
+            {
+              "question": "(Ngoài dự án) Sàn vé concert — chống bot và giữ công bằng?",
+              "answer": "CAPTCHA/Proof-of-work nhẹ; giới hạn IP/device; queue ảo + random slot; audit; không để stock check-sync quá lâu."
+            }
+          ]
+        },
+        {
+          "title": "Đặt chỗ / double-booking (bổ sung ngoài dự án)",
+          "items": [
+            {
+              "question": "Hệ thống đặt phòng khách sạn — hai người cùng đặt phòng cuối?",
+              "answer": "Unique constraint `(room_id, date_range)` không đủ nếu range overlap — dùng **exclusion constraint** (Postgres) hoặc lock theo resource + transaction isolation phù hợp; hoặc **token hold** TTL trong Redis trước khi commit."
+            },
+            {
+              "question": "(Ngoài dự án) Giữ chỗ 15 phút — hết hạn trả slot?",
+              "answer": "TTL key Redis + job scheduler; webhook thanh toán xác nhận; đối soát định kỳ."
+            }
+          ]
+        },
+        {
+          "title": "Multi-tenant SaaS (lý thuyết nghiệp vụ)",
+          "items": [
+            {
+              "question": "Schema per tenant vs shared table + `tenant_id` — trade-off?",
+              "answer": "Shared + column: đơn giản vận hành, cần **RLS** hoặc filter nghiêm; schema riêng: cô lập tốt, migration phức tạp; silo DB: enterprise, chi phí cao."
+            },
+            {
+              "question": "(Ngoài dự án) Rò tenant — test regression phải cover gì?",
+              "answer": "Integration test mọi query có `tenant_id`; forbid `SELECT *` không filter; review ORM eager load cross-tenant."
+            }
+          ]
+        },
+        {
+          "title": "Nhật ký kiểm toán & pháp lý (ERP / kế toán)",
+          "items": [
+            {
+              "question": "Bút toán đã **khóa kỳ** — sửa sai thế nào không phá audit trail?",
+              "answer": "Không update im lặng: tạo **bút điều chỉnh** / bút đảo; giữ immutable log; người duyệt và lý do."
+            },
+            {
+              "question": "(Ngoài dự án) GDPR/xóa dữ liệu cá nhân vs bắt buộc lưu hóa đơn?",
+              "answer": "Ẩn danh hóa (hash) thay xóa cứng; retention policy; pháp lý ưu tiên — tư vấn compliance."
+            }
+          ]
+        },
+        {
+          "title": "Đồng bộ kho khi có WMS / nhiều kho (liên quan ERP)",
+          "items": [
+            {
+              "question": "Tồn kho hiển thị trên web lệch với kho thực — eventual consistency?",
+              "answer": "Sự kiện nhập/xuất; **reconciliation** job đêm; flag “đang xử lý”; hiển thị `available = on_hand - reserved`."
+            },
+            {
+              "question": "(Ngoài dự án) Marketplace — seller tự cập nhật tồn, platform aggregate?",
+              "answer": "Event từ seller API; timeout và default; cảnh báo lệch lớn; idempotent SKU update."
+            }
+          ]
+        },
+        {
+          "title": "Observability & SRE (nghiệp vụ vận hành)",
+          "items": [
+            {
+              "question": "SLO error budget hết — team làm gì trước khi ship feature mới?",
+              "answer": "Freeze release, ưu tiên fix reliability; blameless postmortem; giảm scope hoặc tăng capacity tạm."
+            },
+            {
+              "question": "(Ngoài dự án) Incident 3h — communication stakeholder?",
+              "answer": "Status page cập nhật định kỳ; owner rõ; ETA hoặc workaround; sau incident RCA."
+            }
+          ]
+        },
+        {
+          "title": "Spring Cloud Config & secret rotation (SocialNetwork)",
+          "items": [
+            {
+              "question": "Đổi secret DB/Kafka không restart toàn bộ service?",
+              "answer": "`/actuator/refresh` hoặc **Spring Cloud Bus** broadcast; tốt hơn: **external secret store** (Vault) + lease; graceful reload connection pool."
+            },
+            {
+              "question": "(Ngoài dự án) Lộ key trên Git — xử lý khẩn cấp?",
+              "answer": "Rotate ngay; revoke token; git history purge (BFG); audit access log; postmortem."
             }
           ]
         }
