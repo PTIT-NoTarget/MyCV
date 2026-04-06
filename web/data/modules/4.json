@@ -26,6 +26,11 @@
           "answer": "- **StrongReference** là mặc định: còn reachable thì object không bị GC.\n- **SoftReference** có thể bị thu khi JVM thiếu bộ nhớ, từng dùng cho cache nhưng hành vi phụ thuộc GC nên khó dự đoán cho cache quan trọng.\n- **WeakReference** bị thu ở chu kỳ GC kế tiếp nếu không còn strong ref; hay dùng trong `WeakHashMap` để tránh giữ key quá lâu.\n- **PhantomReference** luôn trả `null`, dùng với `ReferenceQueue` để biết object đã sẵn sàng thu hồi và làm cleanup tài nguyên ngoài heap an toàn hơn `finalize`."
         },
         {
+          "question": "Dọn dẹp tài nguyên tự động trong Java: `finalize` vs `Cleaner` vs `try-with-resources`?",
+          "suggestion": "- Nhấn mạnh GC chỉ thu hồi bộ nhớ, không đảm bảo đóng tài nguyên ngoài heap đúng lúc.\n- `finalize` đã lỗi thời/deprecated for removal; ưu tiên `AutoCloseable` + `try-with-resources`.\n- `Cleaner` chỉ là lưới an toàn cho trường hợp bị quên đóng tài nguyên.",
+          "answer": "- GC dọn **bộ nhớ heap**, nhưng tài nguyên như file handle, socket, native memory cần vòng đời đóng rõ ràng.\n- `finalize()` không đáng tin (thời điểm chạy không xác định, overhead cao, rủi ro resurrect object) và đã bị khuyến nghị loại bỏ dần.\n- Cách chuẩn là implement `AutoCloseable` và dùng `try-with-resources` để giải phóng tài nguyên theo ngữ nghĩa xác định.\n- `Cleaner` có thể dùng như cơ chế fallback để giảm leak khi caller quên `close()`, nhưng không thay thế cleanup tường minh trong luồng chính."
+        },
+        {
           "question": "Công cụ phân tích: heap dump, MAT, async profiler?",
           "suggestion": "- Chọn đúng công cụ theo triệu chứng: memory leak, CPU nóng, hay allocation cao.\n- Luôn thu thập số liệu trước khi tối ưu.",
           "answer": "- Khi nghi **memory leak**, thường lấy heap dump bằng `jcmd` rồi phân tích bằng Eclipse MAT (dominator tree, retained size, GC roots).\n- Khi nghi **CPU bottleneck** hoặc allocation churn, dùng async-profiler hoặc JFR để xem flame graph và hotspot method.\n- VisualVM/JMC phù hợp phân tích nhanh tại môi trường dev/staging; production nên ưu tiên công cụ overhead thấp và có cửa sổ đo rõ ràng.\n- Câu trả lời phỏng vấn tốt là mô tả được \"triệu chứng -> công cụ -> kết luận -> hành động\" thay vì chỉ liệt kê tên tool."

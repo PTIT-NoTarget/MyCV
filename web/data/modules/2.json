@@ -16,11 +16,6 @@
           "answer": "- `ArrayList` dùng mảng động: truy cập theo index O(1), locality tốt nên thường nhanh trong thực tế.\n- Chèn/xóa giữa danh sách tốn O(n) do dịch phần tử.\n- `LinkedList` cho chèn/xóa O(1) khi đã đứng đúng node, nhưng tìm vị trí theo index vẫn O(n).\n- Trade-off: do overhead node + cache miss, `LinkedList` thường kém hơn kỳ vọng; chỉ nên chọn cho pattern queue/deque đặc thù."
         },
         {
-          "question": "`Vector` và `Stack` — có nên dùng?",
-          "suggestion": "- `Vector`/`Stack` là legacy, ít dùng cho code mới.\n- Stack hiện đại nên dùng `Deque` (`ArrayDeque`).\n- Chọn cấu trúc concurrent theo workload (`synchronizedList`, `CopyOnWriteArrayList`).",
-          "answer": "- `Vector` synchronized toàn cục từng method nên đơn giản nhưng kém linh hoạt và thường tốn lock overhead.\n- `Stack` kế thừa `Vector`, API cũ; `Deque` cung cấp `push/pop/peek` sạch hơn và nhanh hơn trong nhiều trường hợp.\n- `CopyOnWriteArrayList` hợp đọc rất nhiều, ghi rất ít; còn ghi thường xuyên thì không phù hợp vì phải copy mảng.\n- Trong codebase mới, thường mặc định `ArrayList`/`ArrayDeque` rồi bổ sung đồng bộ ở tầng phù hợp."
-        },
-        {
           "question": "`HashMap` hoạt động bên trong (Java 8+)?",
           "suggestion": "- Nêu 3 bước: tính hash -> bucket index -> xử lý collision.\n- Java 8+ có tree bin để giảm worst-case collision.\n- Giải thích load factor và resize impact.",
           "answer": "- `HashMap` dùng mảng bucket, index thường tính từ hash đã spread và phép `(n - 1) & hash`.\n- Collision ban đầu là danh sách node; khi bin quá dày (ngưỡng treeify và capacity đủ lớn) có thể chuyển sang cây đỏ-đen.\n- Resize xảy ra khi vượt `capacity * loadFactor` (mặc định 0.75), giúp giữ hiệu năng trung bình O(1).\n- Trade-off: đặt initial capacity hợp lý giảm số lần rehash khi biết trước số lượng phần tử lớn."
@@ -39,11 +34,6 @@
           "question": "`HashSet` implement thế nào?",
           "suggestion": "- `HashSet` thực chất dùng `HashMap` bên dưới.\n- Phần tử set là key map, value chỉ là dummy.\n- Hiệu năng/đúng-sai phụ thuộc `equals` và `hashCode` của element.",
           "answer": "- Khi `add(e)`, `HashSet` lưu `e` như key trong `HashMap` nội bộ.\n- Vì vậy tính đúng đắn phụ thuộc trực tiếp vào contract `equals`/`hashCode` của class phần tử.\n- Nếu key mutable thay đổi hash sau khi add, `contains/remove` có thể thất bại.\n- Trade-off: đơn giản và nhanh cho uniqueness, nhưng cần thiết kế object key cẩn thận."
-        },
-        {
-          "question": "`PriorityQueue` — heap, độ phức tạp?",
-          "suggestion": "- `PriorityQueue` là binary heap, không phải cấu trúc sorted toàn phần.\n- `offer/poll` O(log n), `peek` O(1).\n- Không thread-safe; đa luồng cân nhắc `PriorityBlockingQueue`.",
-          "answer": "- `PriorityQueue` luôn đảm bảo phần tử ưu tiên cao nhất ở đầu, nhưng iteration không trả về thứ tự tăng dần hoàn chỉnh.\n- `offer`/`poll` có độ phức tạp O(log n), `peek` O(1).\n- Mặc định không synchronized nên không an toàn khi nhiều thread cùng sửa.\n- Với producer-consumer đa luồng cần ưu tiên, `PriorityBlockingQueue` thường phù hợp hơn."
         },
         {
           "question": "Fail-fast vs fail-safe iterator?",

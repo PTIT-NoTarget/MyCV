@@ -63,6 +63,16 @@
       ]
     },
     {
+      "title": "Nhiều cơ chế login trên một API (Spring Security)",
+      "items": [
+        {
+          "question": "Chỉ có 1 API login nhưng web hỗ trợ nhiều kiểu đăng nhập, nên tạo nhiều tầng filter. Làm sao để 1 tầng filter thỏa mãn thì không chạy các tầng sau nữa?",
+          "suggestion": "Ưu tiên chain theo điều kiện match; khi đã authenticate thành công thì short-circuit, không đi tiếp các filter login khác.",
+          "answer": "Thiết kế an toàn là để mỗi filter chỉ xử lý đúng một kiểu credential (password/OTP/social) và kiểm tra điều kiện match ngay đầu. Nếu match + xác thực thành công, set `Authentication` vào `SecurityContextHolder` rồi kết thúc luồng login (trả response hoặc chuyển tiếp đích), không gọi tiếp các filter login phía sau. Nếu không match thì `filterChain.doFilter` để nhường tầng kế tiếp. Với Spring Security production, cách dễ bảo trì hơn là gom vào `AuthenticationManager` với nhiều `AuthenticationProvider`: provider nào `supports` và authenticate thành công thì dừng, tránh logic phân nhánh rải rác trong nhiều filter."
+        }
+      ]
+    },
+    {
       "title": "Đồng bộ dữ liệu giữa hệ thống và phần mềm kế toán (liên quan SQL Accounting / VNPT)",
       "items": [
         {
