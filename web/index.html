@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Ôn tập câu hỏi phỏng vấn Java, Spring, hệ thống phân tán" />
+    <title>Câu hỏi phỏng vấn</title>
+    <link rel="stylesheet" href="css/index.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
+    <div class="layout">
+      <header class="header">
+        <div class="header__inner">
+          <h1 class="header__title" id="app-title">Câu hỏi phỏng vấn</h1>
+          <p class="header__desc" id="app-desc"></p>
+          <div class="header__tools">
+            <label class="search">
+              <span class="visually-hidden">Tìm kiếm</span>
+              <input
+                type="search"
+                id="search-input"
+                class="search__input"
+                placeholder="Tìm trong câu hỏi và gợi ý…"
+                autocomplete="off"
+              />
+            </label>
+            <button type="button" class="btn btn--ghost" id="theme-toggle" aria-label="Đổi giao diện sáng/tối">
+              <span class="theme-icon" aria-hidden="true">◐</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="shell">
+        <aside class="sidebar" aria-label="Mục lục">
+          <nav class="nav">
+            <ul class="nav__list" id="section-list"></ul>
+          </nav>
+        </aside>
+
+        <main class="main" id="main">
+          <article class="content" id="content">
+            <p class="content__placeholder">Đang tải dữ liệu…</p>
+          </article>
+        </main>
+      </div>
+
+      <footer class="footer">
+        <span>Nguồn: <code>interview.md</code> — cập nhật qua GitHub Actions</span>
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/index.js" defer></script>
+  </body>
+</html>

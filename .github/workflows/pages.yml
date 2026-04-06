@@ -1,0 +1,39 @@
+# Build interview.json từ interview.md, đẩy thư mục web/ lên nhánh gh-pages.
+# Trên GitHub: Settings → Pages → Build and deployment → Source: Deploy from a branch
+#   Branch: gh-pages, folder: / (root)
+# (Không dùng "GitHub Actions" làm source nữa — tránh lỗi deploy-pages 404.)
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate questions.json
+        run: python3 scripts/build_interview_json.py
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./web
+          force_orphan: true

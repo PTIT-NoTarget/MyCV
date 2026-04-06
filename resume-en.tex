@@ -1,0 +1,144 @@
+\documentclass{resume}
+
+\usepackage[left=0.3 in,top=0.3 in,right=0.3 in,bottom=0.3 in]{geometry} % Document margins
+\usepackage{needspace}
+\newcommand{\tab}[1]{\hspace{.2667\textwidth}\rlap{#1}} 
+\newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}
+\name{Ngô Đăng Hán} % Your name
+\role{Fullstack Developer}
+\address{0963439807 \\ Ha Dong, Hanoi \\ \href{mailto:ngodanghan.work@gmail.com}{ngodanghan.work@gmail.com}}
+
+\begin{document}
+
+\begin{rSection}{OBJECTIVE}
+Software engineer with nearly 3 years of experience building production systems, seeking long-term growth as a Fullstack Developer.
+\end{rSection}
+
+%----------------------------------------------------------------------------------------
+%	EDUCATION SECTION
+%----------------------------------------------------------------------------------------
+
+\begin{rSection}{EDUCATION}
+
+\textbf{Information Technology}, Posts and Telecommunications Institute of Technology (PTIT) \hfill 9/2021 -- 1/2026\\
+
+\end{rSection}
+
+%----------------------------------------------------------------------------------------
+% TECHNICAL STRENGTHS
+%----------------------------------------------------------------------------------------
+\begin{rSection}{SKILLS}
+
+\begin{tabular}{ @{} >{\bfseries}p{0.23\textwidth} p{0.73\textwidth} }
+Back-end & Java, Kotlin, Spring Boot, REST APIs, Spring Security, Hibernate/JPA, Microservices\\
+Database & PostgreSQL, MSSQL\\
+Cache & Redis\\
+Message Broker & Kafka\\
+Search & Elasticsearch\\
+Realtime & WebSocket\\
+Front-end & Angular, React, Vue 3\\
+Authentication & Keycloak\\
+Storage & MinIO\\
+DevOps & Docker, Jenkins, GitHub Actions, Nginx, CI/CD, Ubuntu\\
+Tools & Git, IntelliJ IDEA, VS Code, Postman\\
+\end{tabular}\\
+\end{rSection}
+
+\begin{rSection}{WORK EXPERIENCE}
+
+\textbf{Fullstack Developer} \hfill 10/2024 -- Present\\
+RABILOO COMPANY LIMITED
+\begin{itemize}
+    \itemsep -3pt {}
+    \item Worked with Singapore-based customers.
+    \item Implemented system integration with SQL Accounting tax software.
+\end{itemize}
+ 
+\textbf{Fullstack Developer} \hfill 10/2023 -- 10/2024\\
+FACENET.,JSC
+\begin{itemize}
+    \itemsep -3pt {}
+    \item Developed, built, and deployed web projects with a CI/CD workflow.
+    \item Implemented system integration with VNPT tax software.
+\end{itemize}
+
+\end{rSection}
+
+\begin{rSection}{PROJECTS}
+\vspace{-1.25em}
+
+\Needspace{12\baselineskip}
+\begin{samepage}
+\item \textbf{F-CIM CLOUD}
+\begin{itemize}
+    \itemsep -3pt {}
+    \item \textbf{Description:} Built an integrated ERP system for a steel manufacturing supply chain. The system helped increase daily quotation volume by \textbf{100\%} and streamlined the workflow for sourcing required components after quotation.
+    \item \textbf{Tech stack:} Java, Spring Boot, Angular, PostgreSQL, Docker, Jenkins.
+    \item \textbf{Responsibilities:} Developed backend and frontend modules, integrated databases, integrated third-party systems, and set up CI/CD pipelines.
+\end{itemize}
+\end{samepage}
+
+\Needspace{10\baselineskip}
+\begin{samepage}
+\item \textbf{TEMPLATE}
+\begin{itemize}
+    \itemsep -3pt {}
+    \item \textbf{Description:} Developed customizable PDF document generation based on templates (docx, xlsx) and supplied input data. This reduced \textbf{90\%} of code related to labels, reports, and forms in F-CIM CLOUD, improving maintainability and scalability.
+    \item \textbf{Tech stack:} Java, Spring Boot, Apache POI, Doc4j, JodConverter, XML.
+    \item \textbf{Responsibilities:} Designed and built the template processing engine and developed APIs for dynamic PDF generation.
+\end{itemize}
+\end{samepage}
+
+\Needspace{9\baselineskip}
+\begin{samepage}
+\item \textbf{TRANSPORT MANAGEMENT}
+\begin{itemize}
+    \itemsep -3pt {}
+    \item \textbf{Description:} Built a goods transportation management system to optimize logistics operations and track orders.
+    \item \textbf{Tech stack:} Java, Spring Boot, Angular, MSSQL.
+    \item \textbf{Responsibilities:} Developed order and shipment management features and optimized database queries. Improved approval workflows using Spring Boot annotations and AOP.
+\end{itemize}
+\end{samepage}
+
+\Needspace{11\baselineskip}
+\begin{samepage}
+\item \textbf{POS (Personal Project)}
+\begin{itemize}
+    \itemsep -3pt {}
+    \item \textbf{Description:} Built a POS system for a family retail store to support day-to-day sales operations.
+    \item \textbf{Tech stack:} Java, Spring Boot, Vue 3, PostgreSQL, Docker, GitHub Actions, Nginx.
+    \item \textbf{Responsibilities:} Developed the entire system end to end; integrated bank payments via a third party (Tingee); analyzed and implemented real store workflows; deployed to production.
+\end{itemize}
+\end{samepage}
+
+\Needspace{12\baselineskip}
+\begin{samepage}
+\item \textbf{CareerCoach (Personal Project)}
+\begin{itemize}
+    \itemsep -3pt {}
+    \item \textbf{Description:} Built an AI-assisted CV builder with cross-platform virtual interviews (Web and Mobile).
+    \item \textbf{Tech stack:} Kotlin, Spring Boot, Vue 3, Flutter, PostgreSQL, Keycloak, MinIO, Redis, Docker, GitHub Actions, Nginx.
+    \item \textbf{Responsibilities:} Developed and deployed backend and web frontend; implemented CV generation to keep format and output consistent across Web and Mobile; integrated Google Gemini for CV generation and virtual interviews.
+\end{itemize}
+\end{samepage}
+
+\Needspace{12\baselineskip}
+\begin{samepage}
+\item \textbf{SocialNetwork (Personal Project)}
+\begin{itemize}
+    \itemsep -3pt {}
+    \item \textbf{Description:} Built a microservices-based social platform with posts, comments, reactions, friends, follows, and real-time chat.
+    \item \textbf{Tech stack:} Kotlin, Spring Boot, Microservices, Spring Cloud Config (Config Server), Spring Cloud Gateway (API Gateway), Consul (service discovery), PostgreSQL, Kafka, Redis, MinIO, Elasticsearch, WebSocket, Vue 3.
+    \item \textbf{Responsibilities:} Designed and developed the system end to end using microservices; applied the Saga pattern for distributed transactions; implemented Spring Cloud Config, Spring Cloud Gateway, and Consul for centralized configuration, service registration and discovery, routing, and access control.
+\end{itemize}
+\end{samepage}
+\end{rSection} 
+
+%----------------------------------------------------------------------------------------
+\begin{rSection}{AWARDS} 
+\textbf{ICPC PTIT -- Second Prize} \hfill 2022\\
+\textbf{ICPC PTIT -- Honorable Mention} \hfill 2023\\
+
+\end{rSection}
+
+\end{document}
