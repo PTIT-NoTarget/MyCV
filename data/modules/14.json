@@ -1,0 +1,51 @@
+{
+  "id": "14",
+  "title": "Front-end & DevOps (theo CV)",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Angular vs Vue 3 vs React — khác biệt tư duy?",
+          "suggestion": "Phân biệt theo triết lý: Angular all-in-one, React UI-first, Vue cân bằng DX và tốc độ onboard.",
+          "answer": "Em nhìn theo tư duy kiến trúc: Angular là framework đầy đủ (DI, router, form, convention rõ) nên hợp dự án enterprise cần chuẩn hóa team lớn. React là UI library, linh hoạt chọn state/query/router nên hợp sản phẩm đổi nhanh và cần ecosystem mạnh. Vue 3 nằm giữa: template trực quan, Composition API giúp tổ chức logic theo feature, onboarding nhanh hơn cho team mixed level. Ví dụ thực tế, với module nghiệp vụ nhiều form và rule dài em ưu tiên Angular; còn màn hình dashboard cần iterate nhanh thì em chọn Vue/React để giảm ceremony."
+        },
+        {
+          "question": "CORS — preflight khi nào?",
+          "suggestion": "Preflight xảy ra với request không phải “simple request” (method/header/content-type đặc biệt).",
+          "answer": "Browser gửi preflight OPTIONS trước khi request chính nếu đây là CORS request không đơn giản, ví dụ dùng method như PUT/DELETE, có custom header (như Authorization tùy ngữ cảnh), hoặc Content-Type ngoài bộ simple. Khi đó server cần trả đúng `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers` thì request chính mới được gửi. Trong dự án tích hợp frontend-backend khác domain, em thường kiểm tra preflight bằng tab Network trước, rồi cấu hình CORS theo whitelist origin để vừa chạy được vừa an toàn."
+        },
+        {
+          "question": "Docker multi-stage build?",
+          "suggestion": "Tách stage build và runtime để giảm kích thước image, tăng bảo mật và tốc độ deploy.",
+          "answer": "Multi-stage build tách rõ 2 bước: stage 1 build artifact (Maven/Gradle), stage 2 chỉ chứa runtime và artifact cuối. Cách này giảm mạnh image size, giảm bề mặt tấn công vì không mang theo tool build, đồng thời pull nhanh hơn khi deploy. Ví dụ với Spring Boot, em build ở image JDK rồi copy jar sang image JRE/distroless để chạy production; kết quả là pipeline nhanh hơn và rollback cũng nhẹ hơn vì image nhỏ."
+        },
+        {
+          "question": "GitHub Actions vs Jenkins?",
+          "suggestion": "GHA tối ưu cho GitHub-native workflow; Jenkins mạnh khi cần tự chủ hạ tầng và custom sâu.",
+          "answer": "Nếu tổ chức dùng GitHub làm trung tâm thì GitHub Actions rất nhanh để setup: workflow YAML đặt ngay trong repo, dễ review cùng code, runner hosted/self-hosted linh hoạt. Jenkins phù hợp môi trường on-prem hoặc cần tích hợp nhiều hệ thống legacy nhờ hệ plugin lớn và khả năng tùy biến cao. Thực tế em dùng Jenkins cho hệ thống nội bộ cần kiểm soát network chặt, còn dự án mới em ưu tiên GHA để giảm effort vận hành CI."
+        },
+        {
+          "question": "Angular **Dependency Injection** vs Vue/React — khác tư duy gì?",
+          "suggestion": "Angular DI là core mechanism; React/Vue nghiêng về composition, DI chỉ ở mức pattern nhẹ.",
+          "answer": "Khác biệt lớn là Angular thiết kế DI như cơ chế hạ tầng chính: injector tree, scope theo module/component, nên quản lý dependency và test mock rất bài bản. React/Vue thường đi theo composition (hooks/composables), Context hoặc provide/inject chỉ đóng vai trò truyền dependency nhẹ. Vì vậy ở Angular em định nghĩa boundary service rõ từ đầu; còn React/Vue em ưu tiên tách hook/composable theo feature rồi inject các adapter (API client, logger) khi cần test."
+        },
+        {
+          "question": "Vue 3 **Composition API** vs Options API — khi chọn?",
+          "suggestion": "Component nhỏ, ít state thì Options đủ dùng; logic phức tạp/reuse nhiều thì chọn Composition API.",
+          "answer": "Em chọn Composition API khi component có nhiều concern (fetch data, validate, permission, side effect) vì gom logic theo feature sẽ dễ đọc và tái sử dụng qua composables. Options API vẫn tốt cho màn hình nhỏ, team mới học Vue hoặc flow đơn giản. Ví dụ em tách `usePagination`, `useFilter`, `usePermission` thành composable dùng lại cho nhiều màn hình admin, giúp giảm lặp code và test từng khối logic độc lập."
+        },
+        {
+          "question": "Nginx reverse proxy — buffer, timeout, `proxy_pass`?",
+          "suggestion": "Nắm rõ đường đi request, timeout theo từng lớp và quy tắc `proxy_pass` để tránh lỗi khó debug.",
+          "answer": "Với Nginx reverse proxy, em ưu tiên 3 việc: cấu hình đúng `location` + `proxy_pass` (đặc biệt phần path rewrite), đặt timeout phù hợp (`proxy_connect_timeout`, `proxy_read_timeout`) theo đặc tính API, và bật header/real-ip logging để trace. Ngoài ra em thường cấu hình SSL termination, gzip và giới hạn request cơ bản ở edge. Trên dự án production, nhiều lỗi 504 thực tế đến từ timeout mismatch giữa Nginx và upstream, nên em luôn kiểm tra theo chuỗi end-to-end thay vì chỉ nhìn một service."
+        },
+        {
+          "question": "Blue-green / rolling deploy — trade-off downtime?",
+          "suggestion": "Blue-green giảm downtime/rollback nhanh nhưng tốn tài nguyên; rolling tiết kiệm hơn nhưng cần tương thích ngược.",
+          "answer": "Blue-green chạy song song hai môi trường, khi cutover chỉ đổi traffic nên downtime gần như bằng 0 và rollback rất nhanh; đổi lại chi phí hạ tầng cao hơn. Rolling update thay dần từng instance nên tiết kiệm tài nguyên, nhưng có giai đoạn version cũ và mới cùng chạy, vì vậy API và DB migration phải backward compatible. Kinh nghiệm của em là với thay đổi schema lớn thì đi theo expand-contract để tránh lỗi trong thời gian rollout."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "id": "15",
+  "title": "Kotlin (nếu hỏi thêm)",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Kotlin interoperate Java thế nào?",
+          "suggestion": "Chung JVM bytecode; lưu ý platform type và annotation nullability.",
+          "answer": "Kotlin và Java compile về JVM bytecode nên gọi lẫn nhau trực tiếp, dùng chung classpath/thư viện. Điểm quan trọng khi gọi Java từ Kotlin là `platform type` (ví dụ `String!`): compiler không chắc nullability nên nếu ép non-null sai có thể NPE runtime. Trade-off là interop rất mượt nhưng độ an toàn null phụ thuộc chất lượng annotation (`@Nullable`/`@NotNull`) phía Java. Thực tế nên bọc lớp Java cũ ở boundary để chuẩn hóa kiểu nullable ngay từ đầu."
+        },
+        {
+          "question": "`val` vs `var`, `lateinit`, `lazy`?",
+          "suggestion": "Ưu tiên `val`; `lateinit` cho init muộn mutable, `lazy` cho init khi cần.",
+          "answer": "`val` là reference bất biến, giúp code dễ reasoning và an toàn khi chạy concurrent; `var` dùng khi trạng thái buộc phải thay đổi. `lateinit var` phù hợp dependency được inject sau (không áp dụng cho primitive), nhưng nếu truy cập trước khi init sẽ ném exception. `lazy` phù hợp giá trị chỉ cần khi dùng lần đầu; có mode thread-safety (`SYNCHRONIZED`, `PUBLICATION`, `NONE`) để cân bằng đúng-sai và hiệu năng. Trade-off: `lateinit` linh hoạt hơn nhưng kém an toàn hơn `lazy`/constructor injection."
+        },
+        {
+          "question": "Coroutine vs Java thread (ý tưởng)?",
+          "suggestion": "Coroutine nhẹ hơn thread, mạnh cho IO; vẫn chạy trên pool thread.",
+          "answer": "Coroutine là đơn vị concurrency mức ngôn ngữ, nhẹ hơn OS thread nên scale tốt với workload IO-bound lớn. Khi `suspend`, coroutine nhả thread để tác vụ khác dùng, vì vậy không block như `Thread.sleep`/blocking I/O truyền thống. Với structured concurrency (`CoroutineScope`, parent-child jobs), việc hủy/lỗi được quản lý có cấu trúc hơn thread thô. Trade-off: cho CPU-bound nặng vẫn cần giới hạn song song và chọn dispatcher phù hợp, nếu lạm dụng có thể gây context-switch và starvation."
+        },
+        {
+          "question": "`suspend` function compile ra bytecode thế nào (ý tưởng)?",
+          "suggestion": "Biên dịch thành state machine + `Continuation`, mỗi điểm treo là một state.",
+          "answer": "`suspend` function được compiler chuyển thành hàm nhận thêm tham số `Continuation`, bên trong là state machine với các label cho từng suspend point. Mỗi lần resume, coroutine quay lại đúng state trước đó thay vì chạy lại từ đầu. Vì vậy khi chờ I/O không cần giữ thread bận, miễn là stack gọi bên dưới cũng non-blocking. Trade-off: flow debug/stacktrace phức tạp hơn code sync, nên cần logging/tracing tốt ở production."
+        },
+        {
+          "question": "Kotlin **inline** / `reified` — vì sao cần với generic?",
+          "suggestion": "`reified` chỉ dùng với `inline`, giúp truy cập kiểu `T` tại call-site.",
+          "answer": "Do type erasure trên JVM, generic type thường mất ở runtime; vì vậy hàm thường phải nhận thêm `Class<T>`/`KClass<T>`. Với `inline fun <reified T>`, compiler chèn bytecode tại nơi gọi nên biết được kiểu thật của `T` để làm `is T`, `T::class`, parse JSON thuận tiện hơn. Trade-off là tăng kích thước bytecode nếu dùng quá nhiều inline, nên chỉ inline ở utility nóng hoặc API cần type token tự nhiên."
+        },
+        {
+          "question": "Kotlin **data class** vs Java **record**?",
+          "suggestion": "Cả hai là model dữ liệu; Kotlin linh hoạt hơn, Java record ràng buộc chặt hơn.",
+          "answer": "Java record (JEP 395) tối ưu cho 'carrier data' bất biến: field final, semantic rõ, tích hợp tốt với hệ sinh thái Java hiện đại. Kotlin data class có `copy`, destructuring, có thể dùng `val` hoặc `var`, nên biểu đạt giàu hơn nhưng cũng dễ bị lạm dụng mutable state. Trade-off: record cho tính nhất quán domain model tốt hơn trong Java thuần; data class cho năng suất cao hơn khi viết Kotlin-centric service/DSL. Khi hệ thống mixed Java/Kotlin, chọn kiểu nào nên dựa vào ranh giới module và tooling framework serialization hiện có."
+        }
+      ]
+    }
+  ]
+}

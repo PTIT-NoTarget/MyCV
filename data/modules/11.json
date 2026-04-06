@@ -1,0 +1,86 @@
+{
+  "id": "11",
+  "title": "Elasticsearch",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "Elasticsearch là gì? Khi nào thay SQL `LIKE`?",
+          "suggestion": "Nêu bài toán ES giải tốt hơn truy vấn LIKE.",
+          "answer": "Elasticsearch là search engine phân tán dựa trên Lucene, mạnh ở full-text search, relevance scoring và phân tích dữ liệu gần thời gian thực. SQL `LIKE` phù hợp nhu cầu đơn giản, nhưng thường kém hiệu quả khi dữ liệu lớn hoặc cần xếp hạng kết quả theo mức độ liên quan. Dùng ES khi cần tìm kiếm tự do, gợi ý, lọc + facet, thống kê nhanh trên log/catalog."
+        },
+        {
+          "question": "**Inverted index**?",
+          "suggestion": "Giải thích cấu trúc term -> posting list và lợi ích.",
+          "answer": "Inverted index lưu ánh xạ từ term sang danh sách document chứa term đó (posting list), có thể kèm vị trí token để hỗ trợ phrase query. Nhờ vậy, truy vấn tìm kiếm không phải quét toàn bộ văn bản như full scan. Đây là nền tảng giúp ES tìm nhanh và chấm điểm relevance hiệu quả."
+        },
+        {
+          "question": "Cluster, index, **primary shard**, **replica**?",
+          "suggestion": "Nêu vai trò shard/replica và ảnh hưởng thiết kế ban đầu.",
+          "answer": "Cluster là tập node chạy Elasticsearch; index là namespace logic chứa tài liệu cùng schema/mapping. Dữ liệu index được chia thành primary shard để scale dung lượng/throughput, replica shard dùng cho HA và tăng khả năng đọc. Số primary shard cần ước lượng ngay từ đầu vì thay đổi thường phải reindex sang index mới."
+        },
+        {
+          "question": "**Near real-time** — refresh interval?",
+          "suggestion": "Giải thích vì sao ES là near real-time, không phải real-time tuyệt đối.",
+          "answer": "Sau khi index, document không searchable ngay lập tức mà thường xuất hiện sau lần refresh kế tiếp (mặc định khoảng 1 giây). Vì vậy ES được gọi là near real-time: độ trễ thấp nhưng không tức thời tuyệt đối. Giảm refresh interval giúp dữ liệu thấy sớm hơn nhưng làm tăng chi phí indexing."
+        },
+        {
+          "question": "Analyzer, tokenizer, filter?",
+          "suggestion": "Mô tả pipeline phân tích text và lưu ý cho tiếng Việt.",
+          "answer": "Analyzer gồm tokenizer và các token filter, biến text thô thành token để index/search nhất quán. Tokenizer tách từ, filter xử lý như lowercase, stop words, normalize, stemming tùy ngôn ngữ. Với tiếng Việt cần cấu hình analyzer phù hợp (ví dụ ICU/vi analyzer) để tránh tách từ sai làm giảm precision và recall."
+        },
+        {
+          "question": "`match` vs `term`?",
+          "suggestion": "Phân biệt truy vấn analyzed và exact match.",
+          "answer": "`match` dùng cho field text đã qua analyzer, phù hợp full-text search và relevance scoring. `term` dùng so khớp chính xác trên field không phân tích, thường là `keyword` hoặc số/date/id. Dùng `term` sai trên field `text` dễ ra kết quả bất ngờ do dữ liệu đã bị token hóa."
+        },
+        {
+          "question": "Filter vs query context?",
+          "suggestion": "Nêu khác biệt về scoring và hiệu năng.",
+          "answer": "Query context tính `_score` (mặc định theo BM25 cho text) để xếp hạng kết quả theo độ liên quan. Filter context chỉ trả lời điều kiện đúng/sai, không chấm điểm, thường hiệu quả hơn cho điều kiện cứng như trạng thái, thời gian, tenant. Thực tế nên đặt điều kiện không cần relevance vào `filter`, còn phần tìm kiếm ngữ nghĩa vào `query`."
+        },
+        {
+          "question": "Đồng bộ DB → ES?",
+          "suggestion": "Đưa các chiến lược đồng bộ phổ biến và trade-off.",
+          "answer": "Có thể đồng bộ bằng CDC (ví dụ Debezium), batch ETL định kỳ, hoặc phát event sau khi commit DB để cập nhật index. Mô hình chuẩn là eventual consistency: dữ liệu tìm kiếm có thể trễ so với nguồn chuẩn trong một khoảng ngắn. Cần cơ chế retry, DLQ, idempotent update và monitoring độ trễ đồng bộ."
+        },
+        {
+          "question": "ILM (Index Lifecycle Management)?",
+          "suggestion": "Giải thích vòng đời index để tối ưu chi phí.",
+          "answer": "ILM tự động chuyển index qua các pha như hot, warm, cold/frozen và delete theo tuổi dữ liệu hoặc dung lượng. Mục tiêu là giữ dữ liệu mới trên tầng nhanh, chuyển dữ liệu cũ sang tầng rẻ hơn, rồi xóa đúng hạn. Đây là thực hành quan trọng cho log/time-series để kiểm soát chi phí hạ tầng."
+        },
+        {
+          "question": "Deep pagination — `search_after`?",
+          "suggestion": "Nêu vì sao `from/size` lớn tốn tài nguyên và cách thay thế.",
+          "answer": "Deep pagination bằng `from/size` buộc cluster giữ và sort nhiều kết quả trung gian, làm tăng RAM/CPU và độ trễ. `search_after` dùng giá trị sort của trang trước để đi tiếp, phù hợp phân trang sâu và ổn định hơn. Cần sort key xác định duy nhất (thường kèm `_id`) để tránh bỏ sót hoặc trùng bản ghi."
+        },
+        {
+          "question": "Aggregations — ví dụ?",
+          "suggestion": "Đưa ví dụ dùng aggregation cho analytics/facet.",
+          "answer": "Aggregation cho phép thống kê trực tiếp trên kết quả tìm kiếm: `terms` để đếm theo danh mục, `date_histogram` theo mốc thời gian, và metrics như `avg`, `sum`, `percentiles`. Đây là nền tảng cho dashboard và faceted search trong e-commerce/log analytics. Khi cardinality cao cần giới hạn bucket hoặc dùng chiến lược tổng hợp phù hợp để tránh tốn tài nguyên."
+        },
+        {
+          "question": "Bool query — `must`, `should`, `must_not`, `filter`?",
+          "suggestion": "Giải thích ý nghĩa từng clause và khi dùng.",
+          "answer": "Trong bool query, `must` là điều kiện bắt buộc và có thể ảnh hưởng score; `should` là điều kiện tăng mức liên quan (hoặc bắt buộc nếu cấu hình `minimum_should_match`). `must_not` dùng để loại trừ tài liệu. `filter` là điều kiện bắt buộc nhưng không tính score, phù hợp cho điều kiện cứng để tối ưu hiệu năng."
+        },
+        {
+          "question": "`multi_match` — các `type` (best_fields, most_fields, cross_fields)?",
+          "suggestion": "Nêu khác biệt các type và bài toán phù hợp.",
+          "answer": "`best_fields` ưu tiên field khớp tốt nhất, phù hợp khi mỗi field mang ý nghĩa riêng. `most_fields` cộng tín hiệu từ nhiều field, hữu ích khi cùng nội dung được index nhiều biến thể analyzer. `cross_fields` coi nhiều field như một trường hợp nhất, phù hợp truy vấn gồm các phần nằm rải ở first_name/last_name hoặc title/subtitle."
+        },
+        {
+          "question": "**Fuzzy** search — trade-off?",
+          "suggestion": "Giải thích lợi ích và chi phí của fuzzy matching.",
+          "answer": "Fuzzy search cho phép sai chính tả ở mức edit distance nhất định, giúp tăng khả năng tìm thấy kết quả khi người dùng gõ lỗi. Đổi lại, truy vấn nặng hơn và có thể giảm precision nếu cấu hình `fuzziness` quá rộng. Thực tế nên giới hạn trên trường phù hợp, kết hợp prefix/boost để giữ chất lượng relevance."
+        },
+        {
+          "question": "Dynamic mapping vs explicit `dynamic: false`?",
+          "suggestion": "Nêu rủi ro mapping explosion và cách kiểm soát schema.",
+          "answer": "Dynamic mapping giúp phát triển nhanh vì field mới được suy luận tự động, nhưng dễ phát sinh mapping explosion khi dữ liệu đầu vào lộn xộn. Trong production, nên dùng explicit mapping/index template hoặc `dynamic: false/strict` để kiểm soát schema và chi phí bộ nhớ. Cách này giúp truy vấn ổn định hơn và tránh lỗi khó chẩn đoán do field phát sinh ngoài ý muốn."
+        }
+      ]
+    }
+  ]
+}

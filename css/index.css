@@ -1,0 +1,237 @@
+/* App shell + Q&A — Bootstrap 5 base, theme & typography tweaks */
+:root {
+  --app-font-serif: "Source Serif 4", "Georgia", "Times New Roman", serif;
+  --app-accent: var(--bs-primary);
+}
+
+.app-body {
+  min-height: 100vh;
+  scroll-behavior: smooth;
+}
+
+/* Serif for reading answers */
+.qa__q,
+.qa__a,
+.group__title {
+  font-family: var(--app-font-serif);
+}
+
+/* Desktop: panel cố định trong cột */
+@media (min-width: 992px) {
+  .toc-offcanvas.offcanvas-lg {
+    height: auto;
+  }
+  aside[aria-label="Mục lục phần"] .toc-desktop-heading {
+    padding-left: 0.125rem;
+  }
+  #section-list.list-group {
+    border-radius: var(--bs-border-radius-lg);
+    border: 1px solid var(--bs-border-color);
+    box-shadow: var(--bs-box-shadow-sm);
+    overflow: hidden;
+  }
+}
+
+/* Mobile: nội dung panel trượt */
+@media (max-width: 991.98px) {
+  .toc-offcanvas .offcanvas-body {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Icon nút Mục lục (mobile) */
+.toc-burger {
+  display: inline-block;
+  width: 1.125rem;
+  height: 0.625rem;
+  border-top: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  position: relative;
+  flex-shrink: 0;
+}
+.toc-burger::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 2px solid currentColor;
+}
+
+.toc-nav .list-group-item {
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.toc-nav .list-group-item.active {
+  font-weight: 600;
+}
+
+/* Q&A accordion */
+.group {
+  margin-bottom: 1.75rem;
+}
+.group:last-child {
+  margin-bottom: 0;
+}
+
+.group__title {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed var(--bs-border-color);
+}
+
+details.qa {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+details.qa:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.qa__summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  list-style: none;
+  cursor: pointer;
+  padding: 0.15rem 0;
+  border-radius: 0.375rem;
+  outline-offset: 2px;
+}
+.qa__summary::-webkit-details-marker {
+  display: none;
+}
+.qa__summary::marker {
+  content: "";
+}
+.qa__summary::before {
+  content: "";
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  margin-top: 0.4em;
+  border-style: solid;
+  border-width: 0.32em 0 0.32em 0.48em;
+  border-color: transparent transparent transparent var(--app-accent);
+  transition: transform 0.18s ease;
+}
+details.qa[open] > .qa__summary::before {
+  transform: rotate(90deg);
+}
+.qa__summary:hover .qa__q {
+  color: var(--app-accent);
+}
+.qa__summary:focus-visible {
+  outline: 2px solid var(--app-accent);
+}
+
+.qa__q {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+}
+.qa__q code {
+  font-size: 0.95em;
+  background: var(--bs-secondary-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+}
+
+.qa__a {
+  margin-top: 0.65rem;
+  padding-left: 1.35rem;
+  border-left: 2px solid var(--bs-border-color);
+  font-size: 0.98rem;
+}
+details.qa[open] > .qa__a {
+  animation: qaReveal 0.2s ease;
+}
+@keyframes qaReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.qa__a :first-child {
+  margin-top: 0;
+}
+.qa__a :last-child {
+  margin-bottom: 0;
+}
+.qa__a p {
+  margin: 0.5em 0;
+}
+.qa__a ul,
+.qa__a ol {
+  margin: 0.5em 0;
+  padding-left: 1.35rem;
+}
+.qa__a li {
+  margin: 0.25em 0;
+}
+.qa__a code {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.88em;
+  background: var(--bs-secondary-bg);
+  padding: 0.12em 0.35em;
+  border-radius: 0.25rem;
+}
+.qa__a pre {
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+  background: var(--bs-secondary-bg);
+  border-radius: 0.375rem;
+  font-size: 0.88rem;
+}
+.qa__a a {
+  color: var(--bs-link-color);
+}
+.qa__a a:hover {
+  color: var(--bs-link-hover-color);
+}
+
+/* Hai tầng gợi ý / chi tiết */
+.qa__tier {
+  border-radius: 0.35rem;
+  padding: 0.65rem 0.75rem;
+  background-color: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color-translucent);
+}
+.qa__tier--suggestion {
+  background-color: var(--bs-secondary-bg);
+}
+.qa__tier-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--bs-secondary-color);
+  margin-bottom: 0.25rem;
+}
+.qa__tier-body > :first-child {
+  margin-top: 0.15rem;
+}
+.qa__tier-body > :last-child {
+  margin-bottom: 0;
+}
+
+.header__hint {
+  max-width: 58ch;
+  line-height: 1.45;
+}
+
+/* Wider search on md+ */
+@media (min-width: 768px) {
+  #search-input {
+    max-width: 28rem;
+  }
+}

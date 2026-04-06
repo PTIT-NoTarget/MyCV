@@ -1,0 +1,104 @@
+{
+  "meta": {
+    "title": "Câu hỏi phỏng vấn — Ngô Đăng Hán (Fullstack / Java / Spring)",
+    "description": "Tài liệu gộp: **câu hỏi theo CV**, **câu hỏi nền tảng & framework** (Baeldung, Oracle/OpenJDK, Spring), **design patterns (GoF & enterprise)**, **tình huống nghiệp vụ khó** (kèm bài toán tổng quát ngoài dự án), và **deep-dive theo từng dự án**. Hãy điền chi tiết thật vào chỗ `[tự điền]`.",
+    "source": "web/data/questions-normalized.json"
+  },
+  "modules": [
+    {
+      "id": "1",
+      "title": "Java — nền tảng & ngôn ngữ",
+      "file": "data/modules/1.json"
+    },
+    {
+      "id": "2",
+      "title": "Java — Collections",
+      "file": "data/modules/2.json"
+    },
+    {
+      "id": "3",
+      "title": "Java — Đa luồng & đồng bộ",
+      "file": "data/modules/3.json"
+    },
+    {
+      "id": "4",
+      "title": "JVM, bộ nhớ & GC",
+      "file": "data/modules/4.json"
+    },
+    {
+      "id": "5",
+      "title": "Spring & Spring Boot",
+      "file": "data/modules/5.json"
+    },
+    {
+      "id": "6",
+      "title": "Design patterns (mẫu thiết kế)",
+      "file": "data/modules/6.json"
+    },
+    {
+      "id": "7",
+      "title": "JPA / Hibernate & cơ sở dữ liệu",
+      "file": "data/modules/7.json"
+    },
+    {
+      "id": "8",
+      "title": "REST API, bảo mật, tích hợp",
+      "file": "data/modules/8.json"
+    },
+    {
+      "id": "9",
+      "title": "Redis",
+      "file": "data/modules/9.json"
+    },
+    {
+      "id": "10",
+      "title": "Apache Kafka",
+      "file": "data/modules/10.json"
+    },
+    {
+      "id": "11",
+      "title": "Elasticsearch",
+      "file": "data/modules/11.json"
+    },
+    {
+      "id": "12",
+      "title": "WebSocket",
+      "file": "data/modules/12.json"
+    },
+    {
+      "id": "13",
+      "title": "Microservices",
+      "file": "data/modules/13.json"
+    },
+    {
+      "id": "14",
+      "title": "Front-end & DevOps (theo CV)",
+      "file": "data/modules/14.json"
+    },
+    {
+      "id": "15",
+      "title": "Kotlin (nếu hỏi thêm)",
+      "file": "data/modules/15.json"
+    },
+    {
+      "id": "16",
+      "title": "Theo CV — giới thiệu, học vấn, kỹ năng",
+      "file": "data/modules/16.json"
+    },
+    {
+      "id": "17",
+      "title": "Theo CV — công ty & dự án",
+      "file": "data/modules/17.json"
+    },
+    {
+      "id": "18",
+      "title": "Hành vi & câu hỏi tổng hợp",
+      "file": "data/modules/18.json"
+    },
+    {
+      "id": "19",
+      "title": "Nghiệp vụ & thiết kế hệ thống (khó)",
+      "file": "data/modules/19.json"
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "id": "6",
+  "title": "Design patterns (mẫu thiết kế)",
+  "groups": [
+    {
+      "title": "Nhận biết chung",
+      "items": [
+        {
+          "question": "Design pattern là gì? Khác **principle** (SOLID) thế nào?",
+          "suggestion": "Pattern là mẫu giải pháp cho vấn đề lặp lại; SOLID là bộ nguyên tắc để đánh giá thiết kế.",
+          "answer": "Design pattern mô tả một cách tổ chức class/object đã được kiểm chứng cho bối cảnh cụ thể, kèm hệ quả và trade-off. SOLID không cho bạn sơ đồ lớp sẵn có, mà là tiêu chí để giữ code dễ mở rộng, dễ test và ít phụ thuộc chặt. Khi thiết kế thực tế, pattern và principle bổ trợ nhau: ví dụ Strategy giúp tuân OCP, nhưng nếu lạm dụng lại tăng số abstraction không cần thiết."
+        },
+        {
+          "question": "Phân loại GoF: **Creational**, **Structural**, **Behavioral**?",
+          "suggestion": "Nhớ nhanh: Creational = tạo object, Structural = ghép cấu trúc, Behavioral = phối hợp hành vi.",
+          "answer": "GoF chia pattern theo mục tiêu chính: Creational giải quyết việc khởi tạo và vòng đời object; Structural xử lý cách ghép các thành phần để giảm coupling; Behavioral định nghĩa luồng tương tác và phân chia trách nhiệm. Khi phỏng vấn senior, nên nêu cả tiêu chí chọn và tác dụng phụ, không chỉ kể tên pattern."
+        }
+      ]
+    },
+    {
+      "title": "Creational (nhóm tạo dựng)",
+      "items": [
+        {
+          "question": "**Singleton** — mục đích? Cách thread-safe trong Java?",
+          "suggestion": "Ưu tiên enum hoặc static-holder; phân biệt singleton GoF với singleton scope của Spring container.",
+          "answer": "Singleton đảm bảo một thể hiện cho một phạm vi kiểm soát, thường dùng cho tài nguyên dùng chung hoặc stateless service. Trong Java, `enum` singleton an toàn với serialization và reflection tốt hơn nhiều cách cũ; static-holder cũng thread-safe nhờ class loading. Điểm senior cần nhấn mạnh: singleton không đồng nghĩa global mutable state, và singleton bean của Spring chỉ là một instance trên mỗi `ApplicationContext`, không phải một instance toàn JVM theo nghĩa GoF tuyệt đối."
+        },
+        {
+          "question": "**Factory Method** vs **Abstract Factory**?",
+          "suggestion": "Factory Method chọn 1 loại sản phẩm; Abstract Factory tạo cả họ sản phẩm tương thích.",
+          "answer": "Factory Method thường giải quyết một điểm mở: lớp cha định nghĩa contract tạo object, lớp con quyết định concrete type. Abstract Factory đi xa hơn: nó gom nhiều factory method để tạo một bộ object liên quan và nhất quán với nhau (ví dụ cùng theme hoặc cùng vendor). Trade-off là Abstract Factory tăng tính đồng bộ giữa sản phẩm nhưng cũng làm số interface/class nhiều hơn."
+        },
+        {
+          "question": "**Builder** — khi nào dùng? Lombok `@Builder`?",
+          "suggestion": "Dùng khi constructor quá dài/nhiều optional; mục tiêu là rõ nghĩa và giữ object cuối immutable.",
+          "answer": "Builder phù hợp khi object có nhiều tham số, ràng buộc chéo giữa tham số, hoặc cần đọc code như một DSL nhỏ. Nó giảm lỗi do sai thứ tự tham số và giúp validate trước khi `build()`. Với Lombok `@Builder`, nên cẩn thận default value, nullability và bất biến: annotation giúp giảm boilerplate nhưng không thay thế được việc thiết kế invariant ở tầng domain."
+        },
+        {
+          "question": "**Prototype** — clone object?",
+          "suggestion": "Nhân bản từ mẫu có sẵn; làm rõ shallow/deep copy để tránh share state ngoài ý muốn.",
+          "answer": "Prototype có ích khi chi phí khởi tạo cao hoặc object cần cấu hình phức tạp trước khi dùng lại. Trong Java hiện đại, copy constructor/factory thường an toàn hơn `Cloneable` vì rõ semantics và dễ kiểm soát bất biến. Phần quan trọng là chính sách copy: shallow copy nhanh nhưng dễ bug do dùng chung reference mutable; deep copy an toàn hơn nhưng tốn chi phí."
+        }
+      ]
+    },
+    {
+      "title": "Structural (nhóm cấu trúc)",
+      "items": [
+        {
+          "question": "**Adapter** — ví dụ thực tế?",
+          "suggestion": "Adapter đổi giao diện cũ/ngoài hệ thống sang interface nội bộ thống nhất.",
+          "answer": "Adapter bọc một dependency có contract không phù hợp, rồi expose API mà domain/service của bạn đang cần. Lợi ích lớn là cô lập vendor lock-in và giảm ảnh hưởng khi thay nhà cung cấp. Với hệ tích hợp, mỗi đối tác có một adapter riêng giúp phần nghiệp vụ giữ ổn định, nhưng cần thêm contract test để đảm bảo adapter mapping đúng."
+        },
+        {
+          "question": "**Decorator** vs **Subclass**?",
+          "suggestion": "Decorator thêm tính năng bằng composition runtime; subclass mở rộng bằng inheritance compile-time.",
+          "answer": "Decorator giữ nguyên interface của component và bọc thêm hành vi trước/sau khi gọi object gốc, nên linh hoạt hơn kế thừa khi cần kết hợp nhiều tính năng. Subclass đơn giản hơn cho biến thể ít và ổn định, nhưng dễ nổ số lượng class khi cần mix nhiều hành vi. Java I/O là ví dụ điển hình của decorator chain."
+        },
+        {
+          "question": "**Proxy** — Virtual, Protection, Remote?",
+          "suggestion": "Proxy đứng giữa client và object thật để kiểm soát truy cập, khởi tạo trễ hoặc gọi từ xa.",
+          "answer": "Proxy có cùng interface với object thật nhưng thêm lớp trung gian cho các mối quan tâm kỹ thuật: virtual proxy để lazy-init tài nguyên nặng, protection proxy để kiểm tra quyền, remote proxy để che chi tiết RPC. Trong Spring, AOP/transaction dùng proxy động (JDK proxy hoặc CGLIB) nên có giới hạn như self-invocation không đi qua proxy."
+        },
+        {
+          "question": "**Facade** — khác Adapter?",
+          "suggestion": "Facade gom use case thành API gọn; Adapter chỉ đổi interface để tương thích.",
+          "answer": "Facade cung cấp một điểm vào đơn giản cho subsystem phức tạp, giảm kiến thức mà client phải biết về luồng nội bộ. Adapter giải quyết vấn đề tương thích giao diện, không nhất thiết làm hệ thống đơn giản hơn. Ở hệ enterprise, service application thường đóng vai facade orchestration cho nhiều repository/integration."
+        },
+        {
+          "question": "**Composite** — cây (tree) phần tử?",
+          "suggestion": "Composite cho phép xử lý node lá và node cha cùng một interface trong cấu trúc cây.",
+          "answer": "Composite hữu ích khi miền nghiệp vụ là cây phân cấp và client muốn thao tác đồng nhất trên cả phần tử đơn lẻ lẫn nhóm phần tử. Nó giảm `instanceof`/if-else theo loại node, đổi lại cần thiết kế rõ operation nào hợp lệ cho leaf và composite để tránh API mơ hồ."
+        },
+        {
+          "question": "**Flyweight** — chia sẻ trạng thái?",
+          "suggestion": "Tối ưu bộ nhớ bằng cách chia sẻ trạng thái bất biến dùng chung giữa nhiều object.",
+          "answer": "Flyweight tách trạng thái nội tại (intrinsic, có thể chia sẻ) khỏi trạng thái ngoại tại (extrinsic, truyền khi dùng). Pattern này hiệu quả khi số lượng object rất lớn và phần lớn dữ liệu trùng lặp. Trade-off là code phức tạp hơn do phải quản lý vòng đời pool flyweight và truyền extrinsic state đúng chỗ."
+        },
+        {
+          "question": "**Bridge** — tách abstraction và implementation?",
+          "suggestion": "Bridge tách abstraction khỏi implementation để tránh nổ số class theo tổ hợp.",
+          "answer": "Bridge dùng composition giữa abstraction và implementor, giúp hai chiều thay đổi độc lập (ví dụ loại nghiệp vụ và kênh thực thi). Nó đặc biệt hữu ích khi có ma trận biến thể lớn, nơi inheritance thuần sẽ tạo rất nhiều lớp con. Giá phải trả là thêm một tầng trừu tượng và chi phí thiết kế ban đầu."
+        }
+      ]
+    },
+    {
+      "title": "Behavioral (nhóm hành vi)",
+      "items": [
+        {
+          "question": "**Strategy** — khác if-else dài?",
+          "suggestion": "Đưa các nhánh thuật toán thành các strategy thay thế được để tránh if-else phình to.",
+          "answer": "Strategy tách biến thiên thuật toán ra khỏi context, giúp mở rộng bằng cách thêm implementation mới thay vì sửa code cũ. Senior thường bổ sung tiêu chí chọn: nếu chỉ có 2-3 nhánh ổn định thì if-else có thể đủ; Strategy đáng giá khi hành vi tăng dần theo thời gian, cần test độc lập hoặc cấu hình runtime."
+        },
+        {
+          "question": "**Template Method** — hook method?",
+          "suggestion": "Template Method cố định skeleton xử lý, chỉ cho phép override các bước biến thiên.",
+          "answer": "Template Method phù hợp khi quy trình chung ổn định nhưng từng bước có biến thể. Khác Strategy ở chỗ Template dựa trên inheritance và inversion of control trong cùng hierarchy. Với framework như `JdbcTemplate`, bạn chỉ cung cấp callback/hook, còn lifecycle mở/đóng resource và xử lý lỗi được chuẩn hóa."
+        },
+        {
+          "question": "**Observer** / **Publish–Subscribe**?",
+          "suggestion": "Observer là callback trực tiếp theo danh sách subscriber; pub-sub thêm broker/topic để giảm phụ thuộc.",
+          "answer": "Observer cổ điển thường là quan hệ trong memory giữa subject và observers, phù hợp trong cùng process. Publish-subscribe mở rộng sang hệ phân tán qua broker, đổi lại có chi phí về delivery semantics, ordering và vận hành. Khi trả lời senior nên nói rõ eventual consistency và idempotency khi dùng pub-sub."
+        },
+        {
+          "question": "**Chain of Responsibility** — servlet filter, approval flow?",
+          "suggestion": "Mỗi handler quyết định xử lý hay chuyển tiếp; điểm mạnh là thêm/bớt bước độc lập.",
+          "answer": "Chain of Responsibility tách từng bước xử lý thành các handler nhỏ, giúp cấu hình pipeline linh hoạt và dễ mở rộng. Trong thực tế như filter chain, thứ tự handler quyết định hành vi và bảo mật, nên cần quy tắc rõ ràng và test integration để tránh lỗi do reorder."
+        },
+        {
+          "question": "**Command** — undo, queue?",
+          "suggestion": "Bọc thao tác thành object để queue/log/retry hoặc hỗ trợ undo.",
+          "answer": "Command tách người gửi yêu cầu khỏi người thực thi bằng cách đóng gói dữ liệu + hành động. Lợi ích rõ trong job queue, audit trail và retry có kiểm soát. Nếu cần undo, command nên lưu đủ state hoặc kết hợp memento; nếu không thiết kế trước thì undo rất khó tin cậy."
+        },
+        {
+          "question": "**State** vs **Strategy**?",
+          "suggestion": "State đổi hành vi theo trạng thái nội bộ; Strategy đổi thuật toán theo lựa chọn từ bên ngoài.",
+          "answer": "Hai pattern giống nhau về cấu trúc (composition + interface), nhưng intent khác nhau. State mô hình hóa vòng đời/fsm của một thực thể và cho phép chuyển trạng thái hợp lệ theo rule domain; Strategy tập trung thay thế thuật toán mà không ngụ ý state transition. Câu trả lời senior nên nhấn mạnh intent thay vì chỉ UML."
+        },
+        {
+          "question": "**Iterator** — duyệt collection ẩn cấu trúc?",
+          "suggestion": "Iterator tách logic duyệt khỏi cấu trúc dữ liệu cụ thể (`List`, `Set`, ...).",
+          "answer": "Iterator cung cấp cách duyệt tuần tự mà không lộ chi tiết nội bộ collection. Trong Java, `for-each` dựa trên `Iterator`; cần lưu ý fail-fast iterator có thể ném `ConcurrentModificationException` khi collection bị sửa trái phép trong lúc duyệt."
+        },
+        {
+          "question": "**Mediator** — chat room, không nói chuyện trực tiếp?",
+          "suggestion": "Mediator gom tương tác nhiều đối tượng vào một trung gian để giảm phụ thuộc chéo.",
+          "answer": "Mediator giảm coupling N-N bằng cách chuyển phối hợp sang một thành phần trung tâm. Pattern này tốt cho luồng tương tác phức tạp (UI wizard, workflow nhỏ), nhưng mediator có thể thành God object nếu dồn quá nhiều rule; cần tách theo bounded context/use case."
+        },
+        {
+          "question": "**Memento** — undo snapshot?",
+          "suggestion": "Memento lưu snapshot để rollback/undo mà vẫn đóng gói trạng thái nội bộ.",
+          "answer": "Memento tách vai trò: originator tạo/khôi phục snapshot, caretaker chỉ lưu vòng đời snapshot. Điểm cần cân nhắc là chi phí bộ nhớ và nhất quán snapshot khi object lớn hoặc có reference phức tạp; thường phải kết hợp giới hạn lịch sử hoặc diff-based snapshot."
+        },
+        {
+          "question": "**Visitor** — thao tác trên cây phần tử mà không sửa class?",
+          "suggestion": "Visitor phù hợp khi cấu trúc phần tử ổn định nhưng thường xuyên thêm thao tác mới.",
+          "answer": "Visitor đưa hành vi ra ngoài cây đối tượng, nên thêm operation mới khá rẻ và gom logic theo use case rõ ràng. Đổi lại, nếu thêm loại element mới thường xuyên thì Visitor gây ripple change trên toàn bộ visitor implementations. Vì vậy chỉ nên dùng khi trục thay đổi chính là operation, không phải data structure."
+        }
+      ]
+    },
+    {
+      "title": "Mẫu kiến trúc / enterprise (hay hỏi kèm Spring)",
+      "items": [
+        {
+          "question": "**Dependency Injection** có phải GoF pattern không?",
+          "suggestion": "DI là pattern kiến trúc/IoC, không nằm trong danh sách GoF 23 pattern.",
+          "answer": "Dependency Injection là cách hiện thực Inversion of Control: dependency được cung cấp từ bên ngoài thay vì class tự khởi tạo. Nó giảm coupling concrete implementation, tăng khả năng test và thay thế cấu hình theo môi trường. Trong Spring, DI là cơ chế nền của container, không chỉ là cú pháp `@Autowired`."
+        },
+        {
+          "question": "**Repository** pattern và JPA?",
+          "suggestion": "Repository đặt giao diện truy cập aggregate theo ngôn ngữ domain, không lộ chi tiết ORM.",
+          "answer": "Repository đóng vai trò cổng vào persistence cho aggregate/domain model, giúp nghiệp vụ làm việc theo ngôn ngữ domain thay vì SQL chi tiết. Spring Data `JpaRepository` cung cấp tiện ích sẵn, nhưng senior nên biết khi nào cần custom query/projection để tránh lạm dụng CRUD chung chung."
+        },
+        {
+          "question": "**DAO** khác Repository?",
+          "suggestion": "DAO thiên kỹ thuật truy cập DB; Repository thiên mô hình domain/aggregate.",
+          "answer": "DAO thường bám cấu trúc lưu trữ (bảng, câu lệnh, mapper), còn Repository bám cách domain dùng dữ liệu (aggregate boundary, invariant). Nhiều dự án dùng lẫn thuật ngữ, nên điều quan trọng là giữ ranh giới rõ giữa logic persistence và business logic để tránh anemic service."
+        },
+        {
+          "question": "**DTO** — vì sao không trả Entity trực tiếp?",
+          "suggestion": "DTO giúp ổn định contract API và tránh rò rỉ mô hình persistence ra ngoài.",
+          "answer": "Không nên trả entity trực tiếp vì entity mang concern persistence (lazy proxy, quan hệ vòng, annotation kỹ thuật) và dễ phá vỡ contract khi schema đổi. DTO cho phép kiểm soát payload, version API, và biểu diễn đúng nhu cầu client. Giá đổi lại là cần mapping rõ ràng và quản lý duplication có chủ đích."
+        },
+        {
+          "question": "**MVC** — Spring MVC mapping?",
+          "suggestion": "Trong Spring MVC, `DispatcherServlet` nhận mọi request và điều phối tới controller/view resolver.",
+          "answer": "MVC tách vai trò xử lý input, nghiệp vụ dữ liệu, và hiển thị phản hồi để giảm coupling giữa UI và backend flow. Trong Spring MVC, `DispatcherServlet` hoạt động như Front Controller, phối hợp `HandlerMapping`, `HandlerAdapter`, `ViewResolver` hoặc `HttpMessageConverter` cho JSON. Hiểu pipeline này giúp debug routing, binding và exception handling nhanh hơn."
+        },
+        {
+          "question": "**Front Controller**?",
+          "suggestion": "Front Controller gom điểm vào duy nhất để chuẩn hóa routing, auth, logging, exception.",
+          "answer": "Front Controller đặt một đầu mối nhận request rồi áp dụng cross-cutting concern nhất quán trước khi chuyển cho handler chuyên biệt. Cách này giảm lặp code giữa endpoint và giúp mở rộng framework-level behavior (security, i18n, metrics) có kiểm soát."
+        },
+        {
+          "question": "**Null Object** pattern?",
+          "suggestion": "Dùng một implementation no-op thay cho `null` để giảm if-null lan rộng.",
+          "answer": "Null Object thay giá trị thiếu bằng một object hợp lệ theo cùng contract, nên client code đơn giản và tránh NPE. Pattern này hợp khi hành vi mặc định rõ ràng (no-op/anonymous). Nếu hành vi thiếu không thực sự hợp lệ về nghiệp vụ, nên trả `Optional` hoặc lỗi rõ nghĩa thay vì che giấu vấn đề."
+        },
+        {
+          "question": "**Object Pool** — kết nối DB?",
+          "suggestion": "Object Pool tái sử dụng tài nguyên đắt đỏ như DB connection; khác singleton vì quản lý nhiều instance.",
+          "answer": "Object Pool phù hợp với tài nguyên tạo/huỷ tốn kém và có thể tái sử dụng an toàn, điển hình là connection pool. Với Java hiện đại, chỉ nên pool tài nguyên thật sự đắt đỏ; pool object nhẹ có thể phản tác dụng do contention và GC tuning. Khi thiết kế, cần timeout, leak detection và back-pressure rõ."
+        }
+      ]
+    },
+    {
+      "title": "Anti-pattern & câu hỏi tình huống",
+      "items": [
+        {
+          "question": "**Singleton** khi nào trở thành anti-pattern?",
+          "suggestion": "Singleton thành anti-pattern khi biến thành global mutable state và điểm phụ thuộc ẩn.",
+          "answer": "Singleton gây hại khi nó giữ trạng thái toàn cục, bị truy cập ngầm từ nhiều nơi, làm test phụ thuộc thứ tự chạy và khó mock. Dấu hiệu xấu là class vừa quản lý cấu hình, vừa chứa logic nghiệp vụ, vừa làm service locator. Nếu cần một instance dùng chung, hãy giữ stateless và inject qua container thay vì static truy cập trực tiếp."
+        },
+        {
+          "question": "**God class / Spaghetti code**?",
+          "suggestion": "God class/spaghetti là triệu chứng thiếu ranh giới trách nhiệm và coupling quá cao.",
+          "answer": "God class tập trung quá nhiều logic và knowledge, còn spaghetti code thiếu luồng điều khiển rõ ràng, khiến thay đổi nhỏ cũng gây side effect lớn. Cách chữa bền vững là tách theo bounded context/use case, đưa dependency qua interface rõ ràng, và thêm test bảo vệ trước khi refactor. Pattern chỉ là phương tiện, không phải mục tiêu."
+        },
+        {
+          "question": "Khi nào **không** nên dùng pattern?",
+          "suggestion": "Không dùng pattern khi nhu cầu biến thiên chưa có và abstraction chỉ làm code khó đọc hơn.",
+          "answer": "Pattern nên xuất hiện để giải quyết áp lực thực tế (độ phức tạp, biến thiên, yêu cầu mở rộng), không phải để “trình diễn kiến thức”. Với bài toán nhỏ, thêm nhiều lớp trừu tượng sớm sẽ tăng chi phí nhận thức và bảo trì. Ưu tiên thiết kế đơn giản, đo đạc điểm đau rồi mới refactor lên pattern phù hợp."
+        }
+      ]
+    }
+  ]
+}

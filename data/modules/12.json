@@ -1,0 +1,66 @@
+{
+  "id": "12",
+  "title": "WebSocket",
+  "groups": [
+    {
+      "title": null,
+      "items": [
+        {
+          "question": "WebSocket khác HTTP thế nào?",
+          "suggestion": "HTTP là request-response ngắn; WebSocket nâng cấp kết nối rồi giữ kênh hai chiều liên tục.",
+          "answer": "HTTP truyền thống theo mô hình request-response: client gọi, server trả, rồi kết thúc vòng đời request. WebSocket bắt đầu bằng HTTP handshake rồi `Upgrade` sang kết nối TCP full-duplex, giữ lâu để hai bên chủ động gửi dữ liệu bất cứ lúc nào. Vì không phải mở request liên tục như polling nên giảm overhead và phù hợp realtime như chat, thông báo, live dashboard."
+        },
+        {
+          "question": "WebSocket vs **SSE** vs long polling?",
+          "suggestion": "Chọn theo chiều dữ liệu: long polling giả push, SSE một chiều, WebSocket hai chiều.",
+          "answer": "Long polling là giải pháp tương thích cao nhưng tốn nhiều request vì client phải liên tục giữ và mở lại kết nối. SSE chạy trên HTTP, đơn giản cho luồng server -> client như ticker hoặc notification feed, nhưng không hỗ trợ hai chiều thật sự. WebSocket hỗ trợ hai chiều, độ trễ thấp, phù hợp chat/game/cộng tác thời gian thực. Nếu chỉ cần push một chiều và muốn hạ tầng HTTP sẵn có, tôi ưu tiên SSE trước."
+        },
+        {
+          "question": "WSS và bảo mật handshake?",
+          "suggestion": "Bắt buộc WSS trong production; validate Origin để chống CSWSH; xác thực sớm ở handshake.",
+          "answer": "Production phải dùng WSS để mã hóa dữ liệu và tránh lộ session/token trên đường truyền. Theo khuyến nghị OWASP, server cần kiểm tra `Origin` theo allowlist để giảm nguy cơ Cross-Site WebSocket Hijacking. Về auth, tôi ưu tiên xác thực ngay lúc handshake (cookie/session hoặc token ngắn hạn), tránh đưa access token dài hạn vào query string vì dễ bị lộ qua log."
+        },
+        {
+          "question": "Heartbeat / ping-pong?",
+          "suggestion": "Heartbeat để phát hiện kết nối “zombie”; client cần reconnect có backoff và jitter.",
+          "answer": "Heartbeat giúp phát hiện kết nối đã chết nhưng TCP chưa báo ngay, ví dụ khi đổi mạng hoặc qua NAT/proxy. Với backend, tôi dùng ping/pong ở mức protocol nếu thư viện hỗ trợ. Trên browser, API WebSocket không cho truy cập frame ping/pong mức thấp nên thường gửi heartbeat ở tầng ứng dụng (`type: ping`). Khi timeout nhiều nhịp liên tiếp, client đóng socket và reconnect theo exponential backoff có jitter để tránh tạo thác reconnect."
+        },
+        {
+          "question": "Scale — sticky vs broker?",
+          "suggestion": "Sticky dễ bắt đầu nhưng khó scale đều; thêm broker để broadcast liên node và giảm phụ thuộc session cục bộ.",
+          "answer": "Sticky session giúp triển khai nhanh vì client luôn về đúng node đang giữ connection state. Nhược điểm là dễ lệch tải, scale/deploy rolling khó hơn và failover kém mượt. Với hệ thống lớn, tôi chuyển sang mô hình mỗi node giữ connection cục bộ nhưng đồng bộ message qua broker (Redis pub/sub, Kafka, hoặc STOMP relay). Cách này làm cụm stateless hơn ở tầng routing và dễ mở rộng ngang."
+        },
+        {
+          "question": "Spring — raw WebSocket vs **STOMP**?",
+          "suggestion": "Raw linh hoạt và nhẹ; STOMP tiện routing theo destination, nhưng multi-node nên dùng broker relay.",
+          "answer": "Raw WebSocket phù hợp khi protocol đơn giản và cần kiểm soát frame tối đa để tối ưu hiệu năng. STOMP trong Spring giúp lập trình nhanh hơn nhờ `@MessageMapping`, topic/queue rõ ràng và dễ tổ chức nghiệp vụ. Tuy nhiên SimpleBroker trong memory chỉ phù hợp một node; khi chạy cluster, tôi dùng broker relay (như RabbitMQ) hoặc hạ tầng message khác để fan-out ổn định giữa nhiều instance."
+        },
+        {
+          "question": "Mất tin khi reconnect?",
+          "suggestion": "Thiết kế at-least-once: gắn messageId, ack/offset, reconnect gửi lastSeen để replay phần thiếu.",
+          "answer": "WebSocket mặc định không đảm bảo delivery khi đứt mạng, nên tôi thiết kế cơ chế bù: mỗi bản tin có `messageId` tăng dần hoặc offset. Client lưu `lastSeenId`, khi reconnect sẽ gửi lại giá trị này để server replay các bản tin còn thiếu từ kho bền (DB, Kafka, Redis Stream). Nhờ đó giảm mất dữ liệu và vẫn giữ trải nghiệm realtime."
+        },
+        {
+          "question": "Backpressure?",
+          "suggestion": "Phải có ngưỡng queue/buffer mỗi connection; quá tải thì throttle, drop có chủ đích hoặc ngắt kết nối chậm.",
+          "answer": "Backpressure xảy ra khi producer gửi nhanh hơn khả năng xử lý của consumer. Tôi đặt giới hạn queue outbound theo connection và theo user, đồng thời ưu tiên message quan trọng. Khi chạm ngưỡng, áp dụng throttling hoặc drop các bản tin có thể bỏ qua (ví dụ cập nhật trạng thái tần suất cao), và có thể đóng kết nối quá chậm để bảo vệ toàn hệ thống. Metric cần theo dõi gồm queue depth, send latency và số lần drop."
+        },
+        {
+          "question": "**SockJS** / fallback khi WebSocket bị chặn?",
+          "suggestion": "Fallback hữu ích khi mạng doanh nghiệp/proxy chặn WebSocket; đánh đổi là tăng độ phức tạp và overhead.",
+          "answer": "Trong một số môi trường corporate, proxy hoặc firewall không cho `Upgrade` WebSocket. Khi đó SockJS giúp tự động fallback về các transport HTTP như long-polling để vẫn duy trì chức năng realtime cơ bản. Đổi lại là tăng độ trễ, tăng số request và phức tạp vận hành. Tôi chỉ bật fallback cho nhóm khách hàng cần tương thích cao, còn mặc định ưu tiên WebSocket thuần để tối ưu hiệu năng."
+        },
+        {
+          "question": "Load balancer — WebSocket cần cấu hình gì?",
+          "suggestion": "LB phải cho phép `Upgrade`, tăng idle timeout, và cân nhắc sticky nếu chưa có broker chia sẻ state.",
+          "answer": "Load balancer cần hỗ trợ đúng handshake HTTP Upgrade (`Connection: Upgrade`, `Upgrade: websocket`). Tôi tăng idle timeout lớn hơn HTTP thường để tránh cắt nhầm kết nối sống lâu. Nếu chưa có shared broker, cần sticky session để message đi đúng node đang giữ socket. Ngoài ra nên cấu hình health check và giới hạn connection hợp lý để tránh dồn tải vào một instance."
+        },
+        {
+          "question": "Giới hạn kích thước message WebSocket?",
+          "suggestion": "Đặt max frame/message ở cả client và server; payload lớn nên tách upload/download riêng.",
+          "answer": "Tôi luôn cấu hình giới hạn kích thước frame/message để tránh OOM và tấn công gửi payload quá lớn. Với dữ liệu nặng như file, ảnh hoặc JSON lớn, nên upload qua HTTP/object storage rồi chỉ gửi metadata hoặc URL qua WebSocket. Nếu bắt buộc realtime dữ liệu lớn, áp dụng chunking và cơ chế ghép lại có kiểm tra thứ tự để tránh nghẽn một kết nối."
+        }
+      ]
+    }
+  ]
+}
